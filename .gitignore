@@ -1,0 +1,6 @@
+*.png
+*.jpg
+*.html
+z/db/
+z/ip/
+vendor/*

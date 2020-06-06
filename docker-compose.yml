@@ -1,0 +1,42 @@
+version: "3"
+services:
+  php74:
+    restart: 'no'
+    build:
+        context: docker/
+        dockerfile: 74FPM.dockerfile
+    container_name: phpgit_php74
+    image: phpgit_php74
+    expose:
+     - "9074"
+    networks:
+     - default
+    volumes:
+        - ./:/home/:cached
+#     - apacheMysql:/z/
+#- ./docker/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    environment:
+      - PHP_IDE_CONFIG="serverName=php.home"
+      - XDEBUG_CONFIG="remote_host=192.168.1.99"
+      
+  phpgit_php8:
+    restart: 'no'
+    build:
+        context: docker/php8/
+        dockerfile: php8fpm.dockerfile
+    container_name: phpgit_php8
+    image: phpgit_php8
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+#between containers      
+    expose:
+     - 9080
+    networks:
+     - default
+    volumes:
+     - ./:/home/:cached
+    environment:
+      - PHP_IDE_CONFIG="serverName=php.home"
+      - XDEBUG_CONFIG="remote_host=192.168.1.99"      

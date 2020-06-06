@@ -1,0 +1,10 @@
+{
+    "require": {
+        "amphp/amp": "^2.5",
+        "amphp/socket": "^1.1",
+        "amphp/file": "^1.0",
+        "amphp/http-client": "^4.5",
+        "amphp/http-server": "^2.1",
+        "amphp/websocket-server": "^2.0"
+    }
+}

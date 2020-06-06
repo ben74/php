@@ -1,0 +1,78 @@
+*{-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;transition:all .3s ease-in-out;}
+
+html{font-size:10px;}
+body{font-size:2rem;margin:auto;background:}
+body,table,td,div,fieldset{max-height:99vh;max-width:90vw;}
+fieldset{height:90%}
+.t1{height:94%;}
+
+td{vertical-align:top;height:100%}
+.info{}
+#dropArea{
+    font-size: 4.8rem;height:100%;width:100%;
+    background:rgba(255,255,255,0.5);
+    border: 3px dashed #F00;
+    padding:2rem;
+    width:50vw;
+    font-weight: bold;
+    text-align: center;
+}
+#dropArea.hover {
+    background-color: #CCC;
+    border: 3px dashed #0B0;
+}
+#dropArea.uploading {
+    background: #EEE url(loading.gif) center 50% no-repeat;
+}
+
+#result{overflow-y:auto;height:90%;}
+
+.contr {
+    background-color: #212121;
+    color: #FFFFFF;
+    padding: 1rem 0;
+    text-align: center;
+
+    border-radius:1rem 1rem 0 0;
+    -moz-border-radius:1rem 1rem 0 0;
+    -webkit-border-radius:1rem 1rem 0 0;
+}
+canvas{width:97%;height:2rem;}
+.info {
+    border: 1px dashed #DDDDDD;
+    padding: 0 0 0 3rem;
+}
+.info > div {
+    font-size: 1.4rem;
+    font-weight: bold;
+    padding: 1rem 1.5rem .5rem;
+}
+.info > h2 {
+    padding: 0 1.5rem;
+}
+.info > canvas {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+.info #url {
+    width: 30%;
+}
+
+
+#result{
+    /*white-space: pre;*/
+    overflow-y: hidden;
+}
+#result .s, #result .f {
+    padding: 2px;
+    border-radius:1rem;
+    -moz-border-radius:1rem;
+    -webkit-border-radius:1rem;
+}
+#result .s {
+    background-color: #77fc9f;
+}
+#result .f {
+    background-color: #fcc577;
+}
+

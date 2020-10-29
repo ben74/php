@@ -57,11 +57,11 @@ if(in_array(strtolower($ext), $mediaJsCssExt)){
 
 $c=str_replace('.php','',ltrim($u,'/')).'Controller';
 if(is_file('mvc/controllers/'.$c.'.php')){
-    header("HTTP/1.1 200 OK");
+    header("HTTP/1.1 200 OK",1,200);
     return $c::main();
 }
 
-
+header("HTTP/1.0 404 Not Found",1,404);
 ### end of special things here :)
 $title='404 - not found';
 require_once'z/header.php';

@@ -22,6 +22,6 @@ foreach($x as $v){
 <li><a href="securitytest/injectionStatsFileUpload.php">Security tests : injection by Page Url, Query String, User Agent, Remote Host Referer, Cookie</a></li>
 	</fieldset>
 <hr><center>    
-<pre> &copy; <a target=1  href='//alpow.fr#o:stackiml' title='alpow'>Alpow <?=date('Y')?></a></pre></center>
+<pre> &copy; <a target=1  href='https://alpow.fr#o:phpgit' title='alpow'>Alpow <?=date('Y')?></a></pre></center>
 </body>
 </html>

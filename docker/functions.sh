@@ -1,3 +1,4 @@
+#/usr/sbin/vsftpd 2>/dev/null & 
 function reload() { . $BASH_SOURCE; }
 function phpx() {
      php -dxdebug.remote_autostart=1 $@;

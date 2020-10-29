@@ -1,2 +1,3 @@
 <?php
-#autonomous test suite for windows
+#xdebug ?
+require_once 'vendor/behat/behat/bin/behat';

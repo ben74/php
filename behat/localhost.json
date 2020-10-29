@@ -1,0 +1,1 @@
+{"selenium":"http://127.0.0.1:4444/wd/hub/static/resource/hub.html","custom Config":"true","logins":{"website1":{"john"},"website2":{"pass"}},"login":"john","admin":"adet","pass":"doe","base url":"https://website.com"}

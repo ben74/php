@@ -1,0 +1,44 @@
+default:
+  gherkin:
+    cache: ~
+  extensions:
+    Bex\Behat\ScreenshotExtension:
+      image_drivers:
+        local:
+          screenshot_directory: ~
+          clear_screenshot_directory: false
+      enabled: true
+      screenshot_taking_mode: failed_scenarios
+    Behat\MinkExtension:
+      selenium2:
+        wd_host: "http://127.0.0.1:4444/wd/hub"
+        capabilities: {"platform": "WINDOWS", "browserName": "chrome", "browser": "chrome", 'chrome': {'switches': ['--no-sandbox','--window-size=900,900']}, "marionette": true}
+        #capabilities: {"platform": "WINDOWS", "browserName": "chrome", "browser": "chrome", "marionette": true}
+      default_session: selenium2
+      browser_name: chrome
+      sessions:
+       my_session:
+         selenium2:
+           browser: chrome
+           capabilities:
+             extra_capabilities:
+               chromeOptions:
+                 w3c: false
+                 #args: [ "--start-maximized" ]
+                 args: ['--headless', '--disable-gpu']
+  #so the methods could be placed at a single place
+  autoload:
+    - %paths.base%/common
+#always !!
+  suites:
+    default:
+    #context:
+      #class: featurecontext.php
+#basically, the path were i can put features inside
+      paths: [ %paths.base%, %paths.base%/common ]
+      contexts:
+#- Behat\MinkExtension\Context\MinkContext, herited
+        - FeatureContext:
+            configFilePath: ./localhost.yml
+       #- OtherContext
+#arguments are mandatory

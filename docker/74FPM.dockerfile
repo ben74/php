@@ -1,6 +1,10 @@
 FROM php:7.4-fpm-alpine
 
-RUN apk add bash htop
+RUN apk update
+RUN apk add bash htop imagemagick imagemagick-dev autoconf
+RUN apk add gcc ${PHPIZE_DEPS}
+RUN printf "\n" | pecl install imagick
+#RUN docker-php-ext-install imagick
 RUN docker-php-ext-install mysqli
 RUN docker-php-ext-install pdo
 RUN docker-php-ext-install pdo_mysql
@@ -18,6 +22,6 @@ ENTRYPOINT ["entry"]
 WORKDIR /
 
 #RUN docker-php-ext-install apcu
-RUN apk add --no-cache $PHPIZE_DEPS && pecl install xdebug && docker-php-ext-enable xdebug && docker-php-ext-install pcntl
+RUN pecl install xdebug && docker-php-ext-enable xdebug && docker-php-ext-install pcntl
 
-
+RUN apk del gcc autoconf ${PHPIZE_DEPS}

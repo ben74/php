@@ -1,0 +1,55 @@
+#cd $home/tests/behat;php $home/utils/vendor/behat/behat/bin/behat features/account -vvv
+default:
+#disables cache
+  gherkin:
+    cache: ~
+  extensions:
+#to skip it within a scenario, please annotate : @skiphhvm
+#needs imagick php extension running on machine runnin behat :
+#apt-get install -y libmagickwand-dev imagemagick;printf "\n" | pecl install imagick;
+    Bex\Behat\ScreenshotExtension:
+      image_drivers:
+        local:
+          #screenshot_directory: /shared/behat/
+          screenshot_directory: ~
+          clear_screenshot_directory: false
+      enabled: true
+      screenshot_taking_mode: failed_scenarios
+    Behat\MinkExtension:
+      selenium2:
+#only firefox accepts rude http://user:pass@url
+        wd_host: "http://192.168.99.104:4444/wd/hub"
+        #wd_host: 'http://standalone-chrome.selenium.svc:4444/wd/hub'
+        #capabilities: {"browserName": "firefox", "browser": "firefox" }
+        #,'--window-size=900,2400'    '--disable-dev-shm-usage','--no-sandbox','--disable-gpu'
+        #with fixed selenium 3.8.1 chrome image:
+        #capabilities: {"browserName": "chrome", "browser": "chrome", 'chrome': {'switches': ['--window-size=900,2400']}, "marionette": true}
+        #latest standalone buffr
+        capabilities: {"browserName": "chrome", "browser": "chrome", 'chrome': {'switches': ['--headless','--no-sandbox','--disable-dev-shm-usage','--window-size=900,900']}, "marionette": true}
+      default_session: selenium2
+      browser_name: chrome
+      sessions:
+       my_session:
+         selenium2:
+           browser: chrome
+           capabilities:
+             extra_capabilities:
+               chromeOptions:
+                 args:
+                   - "--start-maximized"
+#so the methods could be placed at a single place
+  autoload:
+    - %paths.base%/common
+#always !!
+  suites:
+    default:
+    #context:
+      #class: featurecontext.php
+#basically, the path were i can put features inside
+      paths: [ %paths.base%, %paths.base%/common ]
+      contexts:
+#- Behat\MinkExtension\Context\MinkContext, herited
+        - FeatureContext:
+            configFilePath: ./behat-config.yml
+       #- OtherContext
+#arguments are mandatory

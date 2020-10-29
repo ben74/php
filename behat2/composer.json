@@ -1,0 +1,16 @@
+{
+    "require-dev": {
+        "bex/behat-screenshot": "^1.2",
+        "drupal/drupal-extension": "~3.4",
+        "emuse/behat-html-formatter": "0.2.*",
+        "symfony/config": "3.4.26",
+        "symfony/console": "3.4.26",
+        "symfony/dom-crawler": "3.4.26",
+        "symfony/finder": "3.4.26",
+        "symfony/filesystem": "3.4.26",
+        "symfony/translation": "3.4.26"
+    },
+    "config": {
+        "bin-dir": "bin/"
+    }
+}

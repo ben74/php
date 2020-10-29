@@ -1,3 +1,4 @@
 {"c":"XDEBUG_SESSION=XDEBUG_ECLIPSE; SID=av5dhad33apfl1988v8g7c47nr; siteDisabled=1;https:\/\/php.home\/securitytest\/injectionStatsFileUpload.php?step=5"}
 
 {"c":"ben=1; PHPSESSID=brhdotsm16vr25a89lpa8o7v18; siteDisabled=1; XDEBUG_SESSION=XDEBUG_ECLIPSE; yUi=MjAyMDEwMTcwOQ==;https:\/\/php.home\/securitytest\/injectionStatsFileUpload.php?step=5"}
+{"c":"ben=1; PHPSESSID=brhdotsm16vr25a89lpa8o7v18; siteDisabled=1; yUi=MjAyMDEwMTcxMA==; XDEBUG_SESSION=XDEBUG_ECLIPSE;https:\/\/php.home\/securitytest\/injectionStatsFileUpload.php?step=5"}

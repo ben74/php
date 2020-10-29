@@ -1,6 +1,6 @@
 version: "3"
 services:
-  php74:
+  phpgit_php74:
     restart: 'no'
     build:
         context: docker/
@@ -26,7 +26,10 @@ services:
         dockerfile: php8fpm.dockerfile
     container_name: phpgit_php8
     image: phpgit_php8
+#exposed
     ports:
+      - 21:21
+      - 22:22
       - 80:80
       - 443:443
       - 8080:8080
@@ -39,4 +42,43 @@ services:
      - ./:/home/:cached
     environment:
       - PHP_IDE_CONFIG="serverName=php.home"
-      - XDEBUG_CONFIG="remote_host=192.168.1.99"      
+      - XDEBUG_CONFIG="remote_host=192.168.1.99"
+
+  selenium:
+    restart: 'no'
+    container_name: selenium
+    #/dev/shm shall be writable ( user shares are not )
+    #latest: antimony : 3.141.59
+    #image: selenium/standalone-chrome
+    image: selenium/standalone-chrome:3.9.0-antimony
+    #mem_limit: 3400000000
+    environment:
+      - GRID_MAX_SESSION=1
+      - GRID_TIMEOUT=60
+      - GRID_BROWSER_TIMEOUT=60
+    extra_hosts:
+      #or ln -s /etc/hosts
+      #since we cant pass any basic http auth with selenium ... just add the problematic hosts here
+      - "mage2.local:192.168.99.100"
+    expose:
+      - "4444"
+      - "5900"
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+    networks:
+      - default
+    #shm_size: 2g
+    volumes:
+      #also known as sharing the global shm with a localhost volume, thats dirty, right, but avoids potentials OOM crashes, whut ?
+      - tmpShm:/tmp
+      - tmpShm:/dev/shm
+      #- .:/z
+    #entrypoint: /bin/bash /z/e.sh
+#      - ~/home:/z
+networks:
+  default:
+    external:
+      name: "1"
+volumes:
+  tmpShm:

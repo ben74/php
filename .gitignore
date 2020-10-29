@@ -1,6 +1,10 @@
 *.png
+*.webp
 *.jpg
+*.msg
 *.html
 z/db/
 z/ip/
+phpservicebus/*
 vendor/*
+behat/vendor/*

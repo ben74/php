@@ -1,0 +1,80 @@
+#make sure there enough available stock
+eav:
+#cat:1 and 2 are _tu defaults
+  catalog_category:
+    - entity_id: ##CATEGORYID##
+      name: Root Category
+      level: 1
+      is_active: 1
+  customer:
+    - entity_id: ##INC##
+      entity_type_id: 1
+      attribute_set_id: 0
+      website_id: ##WEBSITEID##
+      email: john@doe.com
+      password_hash: 882baf28143fb700b388a87ef561a6e5
+      group_id: ##GID##
+      store_id: ##STOREID##
+      is_active: 1
+      firstname: John
+      lastname: Smith
+      created_at: "2016-12-23 08:21:45"
+      updated_at: "2016-12-27 13:07:35"
+  customer_address:
+    - entity_id: 1
+      attribute_set_id: 0
+      customer_id: 1
+      parent_id: 1
+      firstname: John
+      lastname: Smith
+      prefix: Mr
+      country_id: ##COUNTRYISO##
+      #region_id: 39
+      #region_code: NV
+      #region: Nevada
+      postcode: 75000
+      city: Paris
+      telephone: 0100000000
+      street: 14 rue de la paix
+  catalog_product:
+    - entity_id: ##INC##
+      type_id: simple
+      attribute_set_id: 4
+      sku: ##SKU##
+      name: "Magic Product For Testing"
+      price: 10
+      published: 1
+      tax_class_id: 2
+      status: 1
+      visibility: 4
+      website_ids:
+        - ##WEBSITEID##
+#"SQLSTATE[42000]: Syntax error or access violation: 1103 Incorrect table name '', query was: DELETE FROM `` (Zend_Db_Statement_Exception)
+#      category_ids:
+#        - ##CATEGORYID##
+#- ##WEBSITECODE##
+#plant: 1240
+#stock:
+# stock_id: 1
+# qty: 9999
+# is_in_stock: 1
+tables:
+  cataloginventory/stock:
+    - stock_id: ##INC##
+      stock_name: "stock"
+  cataloginventory/stock_item:
+    - item_id: ##INC##
+      product_id: ##INC##
+      stock_id: ##INC##
+      qty: 9999
+  customer/customer_group:
+    - customer_group_id: 0
+      customer_group_code: "NOT LOGGED IN"
+      customer_group_label: "NOT LOGGED IN"
+      b2x_reasoncode: ECOM
+      b2x_sap_reasoncode: ECOM
+    - customer_group_id: 1
+      customer_group_code: "General"
+      customer_group_label: "General"
+      b2x_reasoncode: ECOM
+      b2x_sap_reasoncode: ECOM

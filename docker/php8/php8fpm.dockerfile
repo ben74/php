@@ -24,7 +24,7 @@ RUN pickle install redis
 
 RUN rc-update add nginx default
 RUN mkdir /run/nginx/
-RUN rm -rf /var/cache/apk/*
+
 RUN mkdir /run/openrc && touch /run/openrc/softlevel
 RUN adduser -D -g 'www' www && chown -R www:www /var/lib/nginx && chown -R www:www /home
 
@@ -36,3 +36,7 @@ ENTRYPOINT ["entry"]
 WORKDIR /
 
 ENV TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
+
+RUN apk add vsftpd
+RUN cp /etc/vsftpd/vsftpd.conf /etc/vsftpd/vsftpd.conf.back
+RUN rm -rf /var/cache/apk/*

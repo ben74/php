@@ -555,3 +555,121 @@ function searchInArrayDepths($array,$keys=0,$contains=0,$lv=0,$bk=['root']){
     }
     return $found;
 }
+
+/*}caching?{*/
+function memcache()
+{
+    if(isset($_ENV['noMemCache']))return 0;
+    if (isset($_ENV['memcachedc'])) {
+        return $_ENV['memcachedc'];
+    }
+    if (!function_exists('memcache_connect')) {
+        $_ENV['memcachedc'] = 0;
+        return 0;
+    }
+    $conn = @memcache_connect('127.0.0.1', 11211);
+    if ($conn) {
+        $_ENV['memcachedc'] = $conn;
+    } else {
+        $_ENV['memcachedc'] = 0;
+    }
+    return $_ENV['memcachedc'];
+}
+
+function mg($k)
+{
+    if (memcache()) {
+        $v = memcache_get(memcache(), $k);
+        return $v;
+    }
+    return null;
+}
+
+function ms($k, $v, $expiration = 2592000)#one year, instead of 10800, 30 days : 2592000  is max value
+{
+    #if(!$expiration){$expiration=time()+2592000;}
+    #$expiration=time()+10800
+    if (memcache()) {
+        $exists=memcache_get(memcache(), $k);
+        if($exists!==FALSE) {
+            $set = memcache_replace(memcache(), $k, $v, 0/*MEMCACHE_COMPRESSED?*/, $expiration);
+        }else{
+            $set = memcache_add(memcache(), $k, $v, 0/*MEMCACHE_COMPRESSED?*/, $expiration);
+        }
+        if(!$set){
+            $a=1;
+        }
+        return $set;
+    }
+    return null;
+}
+
+/*cacheproxy*/
+function cacheGet($k)
+{
+    if (memcache()) {
+        return mg($k);
+    }
+    if (isset($GLOBALS['argv'])) {
+        #todo:igb, json ?
+        return unserialize(FGC('z/shm/'.preg_replace('~[^a-z0-9]~is','',$k).'.cache'));
+    } else {
+        return apcu_fetch($k);
+    }
+    #-ok for php fpm
+}
+
+function cacheSet($k, $v)
+{
+    if (memcache()) {
+        return ms($k, $v);
+    }
+    if (isset($GLOBALS['argv'])) {
+        return FPC('z/shm/'.preg_replace('~[^a-z0-9]~is','',$k).'.cache',serialize($v));
+    } else {
+        return apcu_store($k, $v);
+    }
+}
+
+function cacheDel($k){
+    if (memcache()) {
+        memcache_delete(memcache(), $k);
+    }
+    if (isset($GLOBALS['argv'])) {
+        @unlink('z/shm/'.preg_replace('~[^a-z0-9]~is','',$k).'.cache');
+    } else {
+        return apcu_delete($k);
+    }
+}
+
+function cacheList(){
+    if (memcache()) {
+        $list = array();
+        $allSlabs = memcache_get_extended_stats(memcache(),'slabs');
+        #$items = memcache_get_extended_stats(memcache(),'items');
+        foreach ($allSlabs as $server1 => $slabs) {
+            foreach ($slabs AS $slabId => $slabMeta) {
+                $cdump = memcache_get_extended_stats(memcache(),'cachedump', (int)$slabId);
+                foreach ($cdump AS $server3 => $arrVal) {
+                    if (!is_array($arrVal)) {continue;}
+                    $ak=array_keys($arrVal);
+                    $arrVal=array_map('trim',$arrVal);
+                    $list+=$ak;#
+                }
+            }
+        }
+        return $list;
+    }else{
+        $x=glob('z/shm/*.cache');
+        $x=array_map(function($e){return str_replace(['z/shm/','.cache'],'',$e);},$x);
+        return $x;
+    }
+}
+
+function shExec($command){
+    if(isset($_SERVER['WINDIR']) or isset($_SERVER['windir'])) {#windows special commands
+        return pclose(popen($command, 'r'));
+    }else{
+        return exec($command);
+    }
+}

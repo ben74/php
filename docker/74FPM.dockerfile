@@ -5,6 +5,9 @@ RUN apk add bash htop imagemagick imagemagick-dev autoconf
 RUN apk add gcc ${PHPIZE_DEPS}
 RUN printf "\n" | pecl install imagick
 #RUN docker-php-ext-install imagick
+#RUN docker-php-ext-install memcache
+#RUN docker-php-ext-install igbinary
+#RUN docker-php-ext-install apcu
 RUN docker-php-ext-install mysqli
 RUN docker-php-ext-install pdo
 RUN docker-php-ext-install pdo_mysql

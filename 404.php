@@ -58,6 +58,9 @@ if(in_array(strtolower($ext), $mediaJsCssExt)){
 $c=str_replace('.php','',ltrim($u,'/')).'Controller';
 if(is_file('mvc/controllers/'.$c.'.php')){
     header("HTTP/1.1 200 OK",1,200);
+    if(isset($argv)){
+        return $c::main($argv);
+    }
     return $c::main();
 }
 

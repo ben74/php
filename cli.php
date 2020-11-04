@@ -1,4 +1,8 @@
 <?
+chdir(__DIR__);#lock here
+if(!isset($_SERVER['PWD'])){
+    $_SERVER['PWD']=str_replace('\\','/',__DIR__);
+}
 $a=1;
 if(!isset($argv)){?>
 <pre>

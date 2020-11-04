@@ -1,4 +1,11 @@
 <?die;#notes using syntax color & so ..
+"C:\prog\memcached\memcached.exe";
+c:/prog/xamp7/php74/php -dxdebug.remote_autostart=1 C:/Users/ben/home/phpgit/cli.php async 2
+
+php74 -dxdebug.remote_autostart=1 C:/Users/ben/home/phpgit/cli.php async 2
+
+php74 -i | grep apc
+
 phpgit;log phpgit_php74;
 cd /home/mvc/controllers;php -S 127.0.0.1:1983 phpServerController.php;#easier 20Mo postdata => took : 45ms
 php /home/cli.php streamServer;
@@ -50,3 +57,5 @@ https://github.com/docksal/behat/issues/7
 #---
 docker exec -it phpgit_php74 "/bin/bash  /home/behat/behat-portable.sh docker" --rm
 log phpgit_php74;bash /home/behat/behat-portable.sh docker
+
+fig up -d log phpgit_php74;bash /home/behat/behat-portable.sh docker

@@ -2,17 +2,30 @@
 
 class baseObject
 {
-    static $nbinstances = 0, $instances = [];
-    public $data = [], $quick = 1;#not sharing static scope
+#redeclare in child if you want these data to be shared
+    static $nbinstances = 0, $instances = [], $dataS = [];
 
+    public $data = [], $quick = 1;#not sharing static scope
+#public $uuid=null,$defined = __file__;#$who = 'base', #could be overrided as default
     /*private function __construct(){} self is shared for every instances*/
+
+    function __construct()
+    {
+        $class = static::gc();
+        $_ENV['_nbi'][$class]++;
+        $p=func_get_args();
+        if($p){$a=1;$this->_data=$p;}
+        $_ENV['_obj'][$class][] = $this;
+    }
+    /*
     function __construct($parameters = [])
     {
         static::$nbinstances++;#increments on each construction
-        if (!isset(static::$instances[static::class])) {#instance of who ????
-            static::$instances[static::class] = [];
+        if (!isset(static::$instances[static::gc()])) {#instance of who ????
+            static::$instances[static::gc()] = [];
         }
-        static::$instances[static::class][] = $this;
+        static::$instances[static::gc()][] = $this;
+
         if ($parameters) {
             if ($_ENV['objData'] && $parameters != $this->data) {
                 $this->data = $parameters;
@@ -25,10 +38,10 @@ class baseObject
         if ($this->quick) {
             return;
         }
-        $this->uuid = static::class . '/' . uniqid();
+        $this->uuid = static::gc() . '/' . uniqid();
 
     }
-
+*/
     /*appels functions not set=> NO STATIC HERE IN MAGIC METHODS BORDEL
     get static context out of this
     self::i([$reste=>$reset]);
@@ -126,34 +139,12 @@ class baseObject
         }
         return null;#Ne jamais retourner l'objet si échec
     }
-    /*
-    public function __get($k)
-    {
-    if (isset($this->data[$k]) && 'private') {
-    return $this->data[$k];
-    }
-    if (!$this->quick && isset(static::$dataS[$k])) {
-    return static::$dataS[$k];
-    }
-    return null;
-    }
-
-    public function __set($k, $v)
-    {
-    $this->data[$k] = $v;
-    if(!$this->quick){static::$dataS[$k] = $v;}
-    return static::me();
-    }
-    */
-#static part then
-#public $uuid=null,$defined = __file__;#$who = 'base', #could be overrided as default
-    static $dataS = [];#is shared
 
     /** return static::me();returns itself from static context*/
     static function me()
     {
-        if (isset(static::$instances[static::class])) {#verschiedene Instanzen ..
-            return reset(static::$instances[static::class]);#singleton : renvoie la première instance crée ;)
+        if (isset(static::$instances[static::gc()])) {#verschiedene Instanzen ..
+            return reset(static::$instances[static::gc()]);#singleton : renvoie la première instance crée ;)
         }
         return null;
     }
@@ -161,24 +152,37 @@ class baseObject
     /** get instance
      * $a=self;#as undefined constant self=='self'???? self::i()
      */
-    static function i($parameters = null)
+    static function i($p = null)
     {
-        $c = static::class;
-        $me = static::me();
-        if ($me && 'returns first instance as singleton') {
-            return $me::registerParameters($parameters);
+        $class = static::gc();
+        if (!isset($_ENV['_obj'][$class])) {# creates one
+            $o = new static;
+            #$reflector = new ReflectionClass($class);$o = $reflector->newInstanceArgs($p);
+        } else {
+            $o = reset($_ENV['_obj'][$class]);
         }
-        $i = new static($parameters);
-        #static::$instances[static::class][] = $i;#nouvelle instance crée
-        return $i;#otherwise build the first instance !
+        if($p)$o->setOrGetKv($p);
+        return $o;
     }
-
+    /*
+        static function i($parameters = null)
+        {
+            $c = static::gc();
+            $me = static::me();
+            if ($me && 'returns first instance as singleton') {
+                return $me::registerParameters($parameters);
+            }
+            $i = new static($parameters);
+            #static::$instances[static::gc()][] = $i;#nouvelle instance crée
+            return $i;#otherwise build the first instance !
+        }
+    */
     /** new instance */
     static function add($parameters = null)
     {
-        $c = static::class;
+        $c = static::gc();
         $i = new static($parameters);
-        #static::$instances[static::class][] = $i;
+        #static::$instances[static::gc()][] = $i;
         return $i;
     }
 
@@ -195,7 +199,7 @@ class baseObject
 #foreach ($z as $k => $v) {$this->$k = $v;}
         } #register those parameters if passed
         return $me;#returns itself, defined in construct
-#$class=static::class;if(!isset(static::$instances[$class]))static::$instances[$class]=$this;else static::$additional[$class][]=$this;
+#$class=static::gc();if(!isset(static::$instances[$class]))static::$instances[$class]=$this;else static::$additional[$class][]=$this;
     }
 
     static function id()
@@ -204,7 +208,122 @@ class baseObject
         $a = 1;
         return;
         return static::uuid;#$this->
-        $ash = spl_object_hash(static::class);#cant get this as static
+        $ash = spl_object_hash(static::gc());#cant get this as static
         return $ash;
     }
+
+#instead of static::class for php<5.6 compactibility
+    static function gc()
+    {
+        return get_called_class();
+        /*if(PHP_VERSION_ID < 56000)return get_called_class();syntax error, unexpected 'class' (T_CLASS), expecting identifier (T_STRING) or variable (T_VARIABLE) or '{' or '$'
+        else{return static::class;}*/
+    }
+
+    function __invoke()
+    {
+
+    }
+
+#appel statique vers une fonction publique ?
+    static function __callStatic($a, $b)
+    {
+        $instance = static::i();
+        return $instance->{$a}($b[0]);
+        #set singleton value
+    }
+
+    function __wakeup()
+    {#unserialize
+        $class = static::gc();
+        if ($class == 'plBasket') {
+            $a = 1;
+        }
+        #$_ENV['_nbi'][static::class]++;
+        $_ENV['_obj'][$class][] = $this;
+    }
+
+#on non-existing : get from collective self::$data ?
+    function __get($k)
+    {
+        return null;#not set or in data ???
+        $k = strtolower($k);
+        return $this->get($k);
+    }
+
+    /* xdebug interceptions */
+    function get($k=null)
+    {#get on static ???
+        if(!isset($this)){$el=static::i();} else{$el=$this;}
+        if(!$k){#todo :: list all
+            return get_object_vars($el);#use reflector for private properties
+        }
+        if($k){
+            if (!isset($el->$k)) {
+                return null;
+            }
+            return $el->$k;
+        }
+    }
+
+    function set($k, $v = null, $hydrate = 0, $_newer = 0, $virtual = 0)
+    {
+        if(!isset($this)){$el=static::i();} else{$el=$this;}
+
+        if(is_array($k)){
+            foreach($k as $k2=>$v2){
+                $el->set($k2,$v2);
+            }
+            return $el;
+        }
+        $el->$k = $v;
+        return $el;
+    }
+
+#on non-existing, loss of proper backtrace
+    function __set($k, $v)
+    {
+        #$this->set($k,$v);#loops
+        $this->$k = $v;
+        return $this;
+    }
+
+    function push($array, $k = null, $v = null)
+    {
+        $a = 1;
+        if (is_null($v) and $k) {
+            $v = $k;
+            $k = null;
+        }#simple push
+        if (!$k and $k !== 0) {
+            $err = 'no keys';
+        }
+        if (!isset($this->{$array})) {
+            $this->{$array} = [];
+        }
+        if (is_null($k) or (!$k and $k !== 0)) {
+            $this->{$array}[] = $v;
+        } else {
+            $this->{$array}[$k] = $v;
+        }
+    }
+
+    function setOrGetKv($p = null)
+    {
+        if (!$p) {
+            return $this;
+        }
+
+        if (is_array($p)) {
+            foreach ($p as $k => $v) {
+                $this->{$k} = $v;
+            }
+            return $this;
+        } elseif (isset($this->{$p})) {
+            return $this->{$p};
+        } else {
+            return null;
+        }
+    }
+
 }#end base :: generic object

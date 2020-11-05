@@ -1,7 +1,7 @@
 <?php
-#will wait n
-class asyncController extends base{
+#will wait n seconds to complete n actions
 #phpx cli.php async 2
+class asyncController extends cli{
     static function Main($args=null){
         #$_ENV['noMemCache']=1;#works with simple files too
         if(!$args){
@@ -15,10 +15,11 @@ then look at /z/shm/wait-var-ep-0.log for the real time spent by sub-process to 
         }
 
         $_cachedVars=[];
-        $background=' > /dev/null 2>&1 &';$phpExecPath='php';$pwd=$_SERVER['PWD'];
+        $phpExecPath=getConf('phpExecPath');
+        $background=' > /dev/null 2>&1 &';$pwd=$_SERVER['PWD'];
         if(isset($_SERVER['WINDIR']) or isset($_SERVER['windir'])){#windows special commands
             $background=' > NUL 2> NUL';
-            $phpExecPath='start /B c:/prog/xamp7/php74/php';
+            $phpExecPath='start /B '.getConf('winPhpExecPath');
         }
         print_r($args);
         $start=microtime(1);
@@ -29,7 +30,8 @@ then look at /z/shm/wait-var-ep-0.log for the real time spent by sub-process to 
         echo "set:".$set;
         echo "\nget:".cacheGet($ck);
 #apcu_store('expectedAsyncProcessesToComplete',2);
-        $s=$phpExecPath.' '.$pwd.'/cli.php wait var '.$ck.' 0'.$background;echo"\n".$s;shExec($s);#this one will trigger the job at the end
+        $msSleep=200000;#avoid cpu burn ( see civ2 processor policy )
+        $s=$phpExecPath.' -dxdebug.remote_autostart=1 '.$pwd.'/cli.php wait var '.$ck.' 0 '.$msSleep.' waitCallback waitCallbackMethod arg1 arg2'.$background;echo"\n".$s;shExec($s);#this one will trigger the job at the end
         $s=$phpExecPath.' '.$pwd.'/cli.php wait touch temoin.log'.$background;echo"\n".$s;shExec($s);
         $s=$phpExecPath.' '.$pwd.'/cli.php wait sleep 1'.$background;echo"\n".$s;shExec($s);
         $s=$phpExecPath.' '.$pwd.'/cli.php wait msleep 3000'.$background;echo"\n".$s;shExec($s);

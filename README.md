@@ -6,9 +6,10 @@
 > `docker-compose up -d phpgit_php8;ip=$(docker-machine ip default);echo "goto http://$ip"`;
 ---
 - Aka : a gentle introduction to Alpine Framework 
-- Prooving asynchronous php might be made quite easy ;)
+- poc for asynchronous php might be made quite easy ;)
+- conf in app/params.json
 
-Behats/selenium suite works better with fixed version of chrome/selenium image along fixed behat composer dependencies, so many changes between third party librairies cause such
+- Behats/selenium suite works better with fixed version of chrome/selenium image along fixed behat composer dependencies, so many changes between third party librairies cause such
  a mess .. also replace docker ip adress 192.168.99.104 according to your needs 
  `docker-compose up -d phpgit_php74;docker-compose up -d selenium;echo "/home/behat/behat-portable.sh docker" | docker exec -i phpgit_php74 "bin/bash"`
 ---

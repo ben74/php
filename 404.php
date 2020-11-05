@@ -3,17 +3,18 @@ spl_autoload_register('__autoload1');
 function __autoload1($name){
     $name=str_replace('\\','/',$name);
     $tried=[];
-    $paths=['mvc/controllers/','mvc/models/','mvc/views/','app/code/local/', 'app/code/core/', '', '../'];#above autoload in common.php
+    $paths=['mvc/controllers/','mvc/models/','mvc/views/'];#above autoload in common.php
     foreach($paths as $path){
         $tried[]=$f=$path.$name.'.php';
         if(is_file($f)){
+            $_ENV['_autoloader1-404Router-Found'][$name]=$f;
             require_once $f;return 1;
         }
     }
-    echo $name."-\n";
-    print_r($tried);
-    $_ENV['_nf'][]=$name;
+    #echo $name."-\n";print_r($tried);
+    $_ENV['_autoloader1-404Router-Notfound'][]=$name;
 }
+
 #cu https://php.home/z/tn-h100-b1.jpg
 require_once 'app/common.php';
 require_once 'app/functions.php';

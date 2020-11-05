@@ -6,12 +6,15 @@
  * ( runkit : rewriting : eval, base64_decode, shell_exec etc .. )
  */
 $a = __namespace__;
-$mainHost = 'https://php.home/';
 $phpv = phpversion();
+$mainHost = getConf('mainHost');
+
+
 define('XON',isset($_COOKIE['XDEBUG_SESSION']) ? 1 : 0);
 
 set_error_handler('myError');#/*['class','function'] ini_set('log_errors',0);*/
 set_exception_handler('myException'); #restore_error_handler();
+spl_autoload_register('__autoload2');
 //spl_autoload_register('autoloader');
 register_shutdown_function(
     function () {
@@ -672,4 +675,38 @@ function shExec($command){
     }else{
         return exec($command);
     }
+}
+
+function getConf($k=null){
+    if(!isset($_ENV['conf'])){
+        $_ENV['conf']=json_decode(file_get_contents('app/params.json'),1);
+    }
+    if($k){
+        if(isset($_ENV['conf'][$k])){
+            return $_ENV['conf'][$k];
+        }
+        return null;
+    }
+    return $_ENV['conf'];
+}
+
+function setConf($k,$v){
+    $_ENV['conf'][$k]=$v;
+    file_put_contents('params.json',json_encode($_ENV['conf']));
+}
+
+function __autoload2($name){
+    $name=str_replace('\\','/',$name);
+    $tried=[];
+    $paths=['app/code/local/', 'app/code/core/', '', '../'];#above autoload in common.php
+    foreach($paths as $path){
+        $tried[]=$f=$path.$name.'.php';
+        if(is_file($f)){
+            $_ENV['_autoloader2found'][$name]=$f;
+            require_once $f;return 1;
+        }
+    }
+    echo $name."-\n";
+    print_r($tried);
+    $_ENV['_autoloader2Notfound'][]=$name;
 }

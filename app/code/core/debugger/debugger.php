@@ -660,7 +660,7 @@ function cleanRecursion($inputvar, $params = null, $level = 0)
 
     $type = gettype($inputvar);
     if (in_array($type, ['function', 'object']) and is_callable($inputvar)) {
-        return '#!closure';
+        #return '#!closure';
     }
     if (!in_array($type, ['array', 'object'])) {
         return $inputvar;
@@ -701,7 +701,7 @@ function cleanRecursion($inputvar, $params = null, $level = 0)
 
     if ($type === 'object') {
         if (is_callable($obj)) {
-            return '#!closure';
+            #return '#!closure';
         }
         $objid = null;
         $classname = shortclass($obj);

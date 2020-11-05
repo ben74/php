@@ -1,6 +1,9 @@
 <?php
-#will wait n seconds to complete n actions
-#phpx cli.php async 2
+/*
+todo: consider curl_multi_exec to localhost with sha1($private.date('YmdHi')) for achieving the same purpose .. less shell_exec, more php_fpm which could use apcu btw :)
+will wait n seconds to complete n actions
+phpx cli.php async 2
+*/
 class asyncController extends cli{
     static function Main($args=null){
         #$_ENV['noMemCache']=1;#works with simple files too
@@ -18,7 +21,7 @@ then look at /z/shm/wait-var-ep-0.log for the real time spent by sub-process to 
         $phpExecPath=getConf('phpExecPath');
         $background=' > /dev/null 2>&1 &';$pwd=$_SERVER['PWD'];
         if(isset($_SERVER['WINDIR']) or isset($_SERVER['windir'])){#windows special commands
-            $background=' > NUL 2> NUL';
+            $background=' >'.time().'.log 2>'.time().'.log';
             $phpExecPath='start /B '.getConf('winPhpExecPath');
         }
         print_r($args);

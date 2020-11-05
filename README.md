@@ -21,3 +21,6 @@
 - Php default configuration : conf/php56.ini ( short_open_tags, auto_prepend_file )
 ---
 - $a=1;# ordinary stand for : place where the xdebug breakpoints are
+
+
+![visitors](https://visitor-badge.glitch.me/badge?page_id=gh:ben74:phpgit)

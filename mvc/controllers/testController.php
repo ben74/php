@@ -4,7 +4,7 @@ class testController extends cli{
     static function main(){
         $a2='ep';
         $ob=base::set(['a'=>date('YmdHis'),'cachedValueRemainingProcesses'=>cacheGet($a2)]);
-        $array=base::get();
+        $array=base::get();#get_object_vars
         print_r($array);
     }
 }

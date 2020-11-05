@@ -14,7 +14,7 @@ class baseObject
         $class = static::gc();
         $_ENV['_nbi'][$class]++;
         $p=func_get_args();
-        if($p){$a=1;$this->_data=$p;}
+        if($p){$a=1;if(is_array($p) and count($p)==1 and is_numeric(array_keys($p)[0]))$p=reset($p);$this->set($p);}
         $_ENV['_obj'][$class][] = $this;
     }
     /*
@@ -244,9 +244,10 @@ class baseObject
     }
 
 #on non-existing : get from collective self::$data ?
+#avoid the error [type] => 1,[message] => Cannot access empty property, if  $k=''; and $object->$k is used somewhere ..
     function __get($k)
     {
-        return null;#not set or in data ???
+        return null;#todo: decorate not set or in data ???
         $k = strtolower($k);
         return $this->get($k);
     }

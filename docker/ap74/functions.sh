@@ -30,10 +30,10 @@ function lastmod() { a=${1:-1};
     find / -not -path '/proc/*' -not -path '/sys/*' -type f -mmin -$a;
 }
 #launch the home sync at first usage
-#fn 
+#fn *sendmail*
 function fn() { #find shorthand
   #c=`pwd`;cd /;cd $c;
-  find . -not -path '/all/*' -not -path '/home2/*' -not -path '/var/*' -not -path '/tmp/*' -not -path '/z/*' -not -path '/proc/*' -type f -name "$1";
+  find . -not -path '/all/*' -not -path '/home2/*' -not -path '/var/*' -not -path '/tmp/*' -not -path '/z/*' -not -path '/proc/*' -not -path '/sys/*' -type f -iname "$1";
 };
 
 function search() { query=$1;ext=${2:-};dir=${3:-.};flags=${4:-ruIli};
@@ -44,8 +44,8 @@ function search() { query=$1;ext=${2:-};dir=${3:-.};flags=${4:-ruIli};
         case $ext in *\**)echo 'ya-wildcarded';;esac;#*)ext="*.$ext";;
         ext="--include=$ext";
     else ext="--include={*.xml,*.phtml,*.php,*.py,*.js,*.css,*.mjs}";fi;
-    echo "grep -$flags $ext --exclude-dir={/z,/proc} \"$query\" $dir";
-    grep -$flags $ext  "$query" $dir | tee ~/tmp/$output;
+    echo "grep -$flags $ext --exclude-dir={/z,/proc,/sys} \"$query\" $dir";
+    grep -$flags $ext  "$query" $dir | tee /search.$output;
     #grep -rIli --exclude={/all,/bin,/dev,/etc,/lib,/media,/mnt,/mysql,/proc,/root,/run,/sbin,/srv,/sys,/tmp,/usr,/z,/var} --include={*.php} 'benjamin fontaine'
 };
 

@@ -1,0 +1,23 @@
+version: "3"
+services:
+  dbox:
+    build:
+      context: docker/sendmail/
+      dockerfile: dbox.dockerfile
+    container_name: dbox
+    image: dbox   
+    restart: 'no'    
+    
+  sendmail:
+    expose:
+      - 80
+    networks:
+      - default      
+    restart: 'no'
+    build:
+        context: docker/sendmail/
+        dockerfile: phpSendMail.dockerfile
+    container_name: sendmail
+    image: sendmail    
+    volumes:
+    - apacheMySql1:/z/

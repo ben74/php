@@ -1,7 +1,17 @@
 version: "3"
 services:
   ap74:
-  #expose: map to windows ip ( dmz )
+    hostname: a74.fr
+    cap_add:
+      - SYS_ADMIN
+    #env_file:
+    #- web-variables.env
+    environment:
+      - facist=utopia
+      - logCollectorUrl=http://3.x24.fr/a/logCollector.php
+      - logCollectorSecret=hophophop
+      - logCollectorSeed=%y%m%d
+  #ports : global catch , expose: between services
     ports:
       - "1983:1983"
       - "80:80"
@@ -20,6 +30,7 @@ services:
     - apacheMySql1:/z/
     #web document root : delegated : faster writes, cached : faster read    s
     - ./:/home/:cached
+#- syscgroup1:/sys/fs/cgroup
 
   phpgit_php74:
     restart: 'no'
@@ -104,3 +115,4 @@ networks:
 volumes:
   tmpShm:
   apacheMySql1:
+  syscgroup1:

@@ -1,5 +1,26 @@
 version: "3"
 services:
+  ap74:
+  #expose: map to windows ip ( dmz )
+    ports:
+      - "1983:1983"
+      - "80:80"
+      - "443:443"
+      - "3306:3306"
+    networks:
+      - default      
+    restart: 'no'
+    build:
+        context: docker/ap74/
+        dockerfile: Apache74FPM.dockerfile
+    container_name: ap74
+    image: ap74    
+    volumes:
+#https://stackoverflow.com/questions/52037957/kubernetes-share-a-directory-from-your-local-system-to-kubernetes-container    
+    - apacheMySql1:/z/
+    #web document root : delegated : faster writes, cached : faster read    s
+    - ./:/home/:cached
+
   phpgit_php74:
     restart: 'no'
     build:
@@ -82,3 +103,4 @@ networks:
       name: "1"
 volumes:
   tmpShm:
+  apacheMySql1:

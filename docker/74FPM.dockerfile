@@ -1,9 +1,10 @@
 FROM php:7.4-fpm-alpine
 
 RUN apk update
-RUN apk add bash htop imagemagick imagemagick-dev autoconf
+# imagemagick imagemagick-dev
+RUN apk add bash htop autoconf
 RUN apk add gcc ${PHPIZE_DEPS}
-RUN printf "\n" | pecl install imagick
+#RUN printf "\n" | pecl install imagick
 #RUN docker-php-ext-install imagick
 #RUN docker-php-ext-install memcache
 #RUN docker-php-ext-install igbinary

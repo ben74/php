@@ -3,9 +3,8 @@ FROM php:7.4-fpm-alpine
 #docker compact image layers => squash layers
 #docker image build --squash	
 VOLUME /sys/fs/cgroup
-RUN apk update \
-    && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
-    && apk add iproute2 procps mailx postfix certbot git curl tar openssh openssl bash htop autoconf apache2 redis rsync make gcc mariadb-client mysql apache2-utils apache2-ssl apache2-proxy gzip sudo libressl nano vim libsodium-dev curl-dev libmcrypt-dev libmemcached-dev libpng-dev openssh-server openrc ${PHPIZE_DEPS} \
+RUN apk update && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
+    && apk add rsyslog iproute2 procps mailx postfix certbot git curl tar openssh openssl bash htop autoconf apache2 redis rsync make gcc mariadb-client mysql apache2-utils apache2-ssl apache2-proxy gzip sudo libressl nano vim libsodium-dev curl-dev libmcrypt-dev libmemcached-dev libpng-dev openssh-server openrc ${PHPIZE_DEPS} \
     && mkdir /var/run/sshd && pecl channel-update pecl.php.net && pecl install apcu igbinary memcached redis mcrypt \
     && pecl install xdebug && docker-php-ext-enable xdebug && docker-php-ext-install pcntl \
     && docker-php-ext-install -j$NPROC gd \

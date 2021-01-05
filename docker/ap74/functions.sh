@@ -2,6 +2,7 @@
 #DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )";
 function reload() { . $BASH_SOURCE; };function re() { reload; };
 
+lp=/z/logs/${HOSTNAME};
 bg='1>/dev/null 2>&1 &';
 #machine=`cat /whoami`;
 machine=php74;whoami=php74;export machine=php74;export whoami=php74;
@@ -23,7 +24,7 @@ function lockf() {
 #f='/variables.sh';if [ -f $f ]; then . $f;fi;#or as a RKV Json Storage into /z/$machine/
 #echo ". /home2/conf/gfunctions.sh;echo 'welcome "$machine"';" >> /root/.bashrc;  
 function restarer() { off;on;
-  #pkill php-fpm;php-fpm > /z/logs/$machine.log 2>&1 &ls 
+  #pkill php-fpm;php-fpm > $lp/php.log 2>&1 &ls 
 };
 
 function lastmod() { a=${1:-1};
@@ -75,11 +76,11 @@ function off() {
 }
 
 function phpr() {
-    pkill php-fpm;php-fpm 2>/dev/null &
+    pkill php-fpm;php-fpm > $lp/php-fpm.log 2>/dev/null &
 }
 
 function ar(){
-  pkill httpd;/usr/sbin/httpd > /z/logs/httpd.log 2>&1 & 
+  pkill httpd;/usr/sbin/httpd > $lp/httpd.log 2>&1 & 
 }
 function httpr() { ar; }
 function restart(){ off;on; }
@@ -87,7 +88,7 @@ function restart(){ off;on; }
 function dump() { mysqlon;c;dat;name=${1-};f=/home2/$name.$date.dump.sql;mysqlon;mysqldump -u a -pb $name > $f;gzip $f;d;#gzip in background ..
  }
 function mysqloff() { pkill mysqld; }
-function mysqlon() { x=`pgrep mysqld_safe`;if [ ! "$x" ];then /usr/bin/mysqld_safe --datadir='/z/mysql/1' > /z/logs/emysql.log 2>&1 & fi; }
+function mysqlon() { x=`pgrep mysqld_safe`;if [ ! "$x" ];then /usr/bin/mysqld_safe --datadir='/z/mysql/1' > $lp/mysql.log 2>&1 & fi; }
 function mysqlback() { echo 'not good';return;name=${1-};dat;mysqloff;while pgrep mysqld_safe; do printf "..";sleep 1;done;cd /z/mysql;tar cfz mysqlback.$name.$date.sql.tgz 1;mysqlon; }
 #
 function dat() { date=`date +%y%m%d%H%M`; };

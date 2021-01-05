@@ -1,7 +1,9 @@
 version: "3"
 services:
   ap74:
-    hostname: a74.fr
+#stop ap74;fig up -d ap74;log ap74
+#keep original hostname : for the logs subfolder !!!
+#hostname: 91-171-92-63.subs.proxad.net
     cap_add:
       - SYS_ADMIN
     #env_file:
@@ -11,6 +13,8 @@ services:
       - logCollectorUrl=http://3.x24.fr/a/logCollector.php
       - logCollectorSecret=hophophop
       - logCollectorSeed=%y%m%d
+      - volumeArchiveToRsyncOnStartup=secretUrl
+      - rsyncContentTarget=sftptargetUrl
   #ports : global catch , expose: between services
     ports:
       - "1983:1983"

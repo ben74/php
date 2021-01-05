@@ -13,7 +13,7 @@ f='/x/0.installed';if [ ! -f "$f" ]; then
     tar czf backup.tgz /usr/local/etc/php-fpm.d/ /etc/apache2 /usr/local/etc/php /etc/my.cnf.d/mariadb-server.cnf /etc/ssh/sshd_config /etc/postfix/main.cf;
     cp /etc/my.cnf.d/mariadb-server.cnf /backup/maria.cnf;cp /etc/ssh/sshd_config /backup/sshd_config;
     #rm /etc/ssh/sshd_config;cp /backup/sshd_config /etc/ssh/sshd_config
-#Is Main Volume Created ?    
+#Is Main Volume Created ?
 fi;
 
 
@@ -22,10 +22,11 @@ fi;
 #rm -rf /z/conf/*;rm /x/moveConfigurationFilesToVolume.1;. /home/docker/ap74/init.sh
 f='/x/moveConfigurationFilesToVolume.1';if [ ! -f "$f" ]; then    
     d=/z/logs/${HOSTNAME}/;if [ ! -d "$d" ]; then mkdir -p $d;fi;
+    d=/z/logs/${HOSTNAME}/mailsent/;if [ ! -d "$d" ]; then mkdir -p $d;fi;
     d=/z/conf;if [ ! -d "$d" ]; then mkdir $d;fi;
     #d=/z/apache2;if [ ! -d "$d" ]; then mkdir $d;fi;
     d=/z/mysql;if [ ! -d "$d" ]; then mkdir $d;fi;
-    d=/z/sessions;if [ ! -d "$d" ]; then mkdir $d;fi;
+    d=/z/sessions;if [ ! -d "$d" ]; then mkdir $d;chmod 777 -R /z/sessions/;fi;
     d=/z/home;if [ ! -d "$d" ]; then mkdir $d;fi;
 #get confs from main folder    
     rsync -avuz --inplace /home/docker/ap74/conf /z/   
@@ -70,7 +71,7 @@ f='/x/moveConfigurationFilesToVolume.1';if [ ! -f "$f" ]; then
 #sshd: no hostkeys available -- exiting.
     touch $f;   
     chmod 777 -R /z/logs/${HOSTNAME}/
-    chmod 777 -R /var/log/
+    chmod 777 -R /var/log/    
 fi;
 
 #rm /x/mysqlsetup.1;. /home/docker/ap74/init.sh
@@ -104,3 +105,4 @@ fi;
 #touch /run/openrc/softlevel
 /etc/init.d/sshd start
 /etc/init.d/postfix start
+on;#put all services online once started :)

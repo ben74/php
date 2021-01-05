@@ -23,11 +23,10 @@ function lockf() {
 
 #f='/variables.sh';if [ -f $f ]; then . $f;fi;#or as a RKV Json Storage into /z/$machine/
 #echo ". /home2/conf/gfunctions.sh;echo 'welcome "$machine"';" >> /root/.bashrc;  
-function restarer() { off;on;
+function restarer() { off;on; };
   #pkill php-fpm;php-fpm > $lp/php.log 2>&1 &ls 
-};
 
-function lastmod() { a=${1:-1};
+function lastmod() { a=${1:-5};
     find / -not -path '/proc/*' -not -path '/sys/*' -type f -mmin -$a;
 }
 #launch the home sync at first usage
@@ -52,44 +51,35 @@ function search() { query=$1;ext=${2:-};dir=${3:-.};flags=${4:-ruIli};
 
 
 #if [ -z "$functionsLoaded" ];then echo "welcome back brother ben";functionsLoaded=1;synchome;fi;
-function phpx() {
-     php -dxdebug.remote_autostart=1 $@;
-}
+#PHP_IDE_CONFIG="serverName=php.home";XDEBUG_CONFIG="idekey=ECLIPSE";export $PHP_IDE_CONFIG;export $XDEBUG_CONFIG;
+function phpx() { php -dxdebug.remote_autostart=1 $@; }
 
 #XDEBUG_CONFIG="remote_host=192.168.1.99"
-PHP_IDE_CONFIG="serverName=php.home";XDEBUG_CONFIG="idekey=ECLIPSE";
-export $PHP_IDE_CONFIG;export $XDEBUG_CONFIG;
+function on() { phpr;mysqlon;aon; }
+#php-fpm 2>/dev/null &
+#/usr/sbin/nginx -g "daemon off;" 2>/dev/null & 
+#service nginx start
 
-function on() {
-    phpr;
-    mysqlon;
-    ar;    
-    #php-fpm 2>/dev/null &
-    #/usr/sbin/nginx -g "daemon off;" 2>/dev/null & 
-    #service nginx start
-}
+function off() { pkill rsync;phpoff;aoff;mysqloff;   }
 
-function off() {
-    pkill rsync;pkill php-fpm;pkill httpd;mysqloff;
-    x=/var/run/apache2/httpd.pid;if [ -f "$x" ];then rm $x;fi;
-    rm /z/mysql/1/*.err > /dev/null 2>&1;rm /z/mysql/1/*.pid > /dev/null 2>&1;
+function phpon() { php-fpm 2>/dev/null &
 }
+function phpoff() { pkill php-fpm; }
+function phpr() { phpoff;phpon; }# >> $lp/php-fpm.log    }
 
-function phpr() {
-    pkill php-fpm;php-fpm > $lp/php-fpm.log 2>/dev/null &
+function aon(){
+    /usr/sbin/httpd >> $lp/httpd.log 2>&1 & 
 }
-
-function ar(){
-  pkill httpd;/usr/sbin/httpd > $lp/httpd.log 2>&1 & 
-}
+function aoff(){ pkill httpd;x=/var/run/apache2/httpd.pid;if [ -f "$x" ];then rm $x;fi; }
+function ar(){ aoff;aon; }
 function httpr() { ar; }
 function restart(){ off;on; }
 
 function dump() { mysqlon;c;dat;name=${1-};f=/home2/$name.$date.dump.sql;mysqlon;mysqldump -u a -pb $name > $f;gzip $f;d;#gzip in background ..
  }
-function mysqloff() { pkill mysqld; }
-function mysqlon() { x=`pgrep mysqld_safe`;if [ ! "$x" ];then /usr/bin/mysqld_safe --datadir='/z/mysql/1' > $lp/mysql.log 2>&1 & fi; }
-function mysqlback() { echo 'not good';return;name=${1-};dat;mysqloff;while pgrep mysqld_safe; do printf "..";sleep 1;done;cd /z/mysql;tar cfz mysqlback.$name.$date.sql.tgz 1;mysqlon; }
+function mysqloff() { pkill mysqld;rm /z/mysql/1/*.err > /dev/null 2>&1;rm /z/mysql/1/*.pid > /dev/null 2>&1; }
+function mysqlon() { x=`pgrep mysqld_safe`;if [ ! "$x" ];then /usr/bin/mysqld_safe --datadir='/z/mysql/1' >> $lp/mysql.log 2>&1 & fi; }
+function mysqlback() { name=${1-};;mysqloff;while pgrep mysqld_safe; do printf "..";sleep 1;done;cd /z/mysql;dattar cfz mysqlback.$name.$date.sql.tgz 1;mysqlon; }
 #
 function dat() { date=`date +%y%m%d%H%M`; };
 alias back=mysqlback;

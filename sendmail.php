@@ -2,7 +2,7 @@
 session_start();
 $_SESSION['a']=1;
 phpinfo();
-#print_r(sendMail('bmxa74+test@gmail.com','tox24','tox24body',null));
+print_r(sendMail('bmxa74+test@gmail.com','tox24','tox24body',null));
 function sendMail($to,$sub,$body,$head=null,$from=null,$mid=''){
     $s="\r\n";
     $sub='=?UTF-8?B?' . base64_encode($sub) . '?=';
@@ -20,7 +20,7 @@ function sendMail($to,$sub,$body,$head=null,$from=null,$mid=''){
         $head .= "From: $from{$s}Reply-To: $from{$s}";        
     }
 
-    $sp='mail-';#__DIR__.'/';
+    $sp='/var/log/'.$_SERVER['HOSTNAME'].'/mailsent/-';#__DIR__.'/';
     $sent=mail($to,$sub,$body,$head);
     if($sp){#todo:query postfix for messageId
         $f=$_SERVER['DOCUMENT_ROOT'].$sp.substr(preg_replace('~_+~','_',preg_replace('~[^a-z0-9@\.\-]~is','_',$mid.'-_-'.$to.'-_-'.time().'-_-'.$sub)),0,250).'.json';#

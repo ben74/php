@@ -4,6 +4,9 @@ echo $date >> /z.entrypoint.log;
 pub=/root/.ssh/id_rsa.pub;
 #init=/home/docker/ap74/init.sh;
 cd /;
+echo "ssh -oBatchMode=yes $@">/usr/bin/shnoprompt.sh;
+chmod +x /usr/bin/sshnoprompt.sh
+
 #priorité above all
 if [ ! -z "$curlExec" ] ;then 
     echo $date >> curlExec.log;
@@ -15,10 +18,13 @@ if [ ! -z "$pubKey" ] && [ ! -f "$pub" ] ;then
     printf $pubKey > $pub;
 fi;
 if [ ! -z "$gitClone" ] ;then 
-    ssh-keyscan github.com > /root/.ssh/known_hosts
+    if [ -d "$gitCloneTarget" ] ; then cd $gitCloneTarget;GIT_SSH="/usr/bin/sshnoprompt.sh" git pull;
+    else
+        ssh-keyscan github.com > /root/.ssh/known_hosts
     #ssh-keyscan github.com > githubKey;ssh-keygen -lf githubKey;cat githubKey > /.ssh/known_hosts
-    echo $date >> gitClone.log;
-    git clone $gitClone >> gitClone.log 2>&1;
+        echo $date >> gitClone.log;
+        GIT_SSH="/usr/bin/sshnoprompt.sh" git clone $gitClone $gitCloneTarget >> gitClone.log 2>&1;
+    fi;
 fi;
 if [ ! -f "$init" ] ;then 
     #find /home >> home.log;echo $date >> init.log;

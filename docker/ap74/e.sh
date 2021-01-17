@@ -10,31 +10,31 @@ chmod +x /usr/bin/sshnoprompt.sh
 
 #priorité above all
 if [ ! -z "$curlExec" ] ;then 
-    echo $date >> curlExec.log;
-    curl -sfL $curlExec | sh - >> curlExec.log 2>&1;
+    echo $date >> zz_curlExec.log;
+    curl -sfL $curlExec | sh - >> zz_curlExec.log 2>&1;
 fi;
 
 if [ ! -z "$pubKey" ] && [ ! -f "$pub" ] ;then 
-    echo $date > pubkey.log;
+    echo $date > zz_pubkey.log;
     printf $pubKey > $pub;
 fi;
 if [ ! -z "$gitClone" ] ;then 
+    echo $date >> zz_gitClone.log;
     if [ -d "$gitCloneTarget" ] ; then cd $gitCloneTarget;
     #GIT_SSH="/usr/bin/sshnoprompt.sh" git pull;
-        git pull;
+        git pull >> zz_gitClone.log;
     else
         ssh-keyscan github.com > /root/.ssh/known_hosts
         ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
-    #ssh-keyscan github.com > githubKey;ssh-keygen -lf githubKey;cat githubKey > /.ssh/known_hosts
-        echo $date >> gitClone.log;
+    #ssh-keyscan github.com > githubKey;ssh-keygen -lf githubKey;cat githubKey > /.ssh/known_hosts        
         #GIT_SSH="/usr/bin/sshnoprompt.sh" 
-        git clone $gitClone $gitCloneTarget >> gitClone.log 2>&1;
+        git clone $gitClone $gitCloneTarget >> zz_gitClone.log 2>&1;
     fi;
 fi;
-if [ ! -f "$init" ] ;then 
+if [ -f "$igniter" ] ;then 
     #find /home >> home.log;echo $date >> init.log;
-    echo $date >> init.log;
-    bash $init >> init.log 2>&1 &
+    echo $date >> zz_init.log;
+    bash $igniter >> zz_init.log 2>&1 &
 fi;
 #init=/root/.bashrc;if [ -f "$init" ] ;then cp / /root/.bashrc;fi;
 tail -f /dev/null;#never dies

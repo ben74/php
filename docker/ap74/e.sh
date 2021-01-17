@@ -4,7 +4,7 @@ echo $date >> /z.entrypoint.log;
 pub=/root/.ssh/id_rsa.pub;
 #init=/home/docker/ap74/init.sh;
 cd /;
-echo "ssh -oBatchMode=yes $@">/usr/bin/shnoprompt.sh;
+echo "ssh -oBatchMode=yes $@">/usr/bin/sshnoprompt.sh;
 chmod +x /usr/bin/sshnoprompt.sh
 
 #priorité above all

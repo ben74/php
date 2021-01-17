@@ -11,6 +11,7 @@ services:
     #- web-variables.env
     environment:
       - pubKey=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCvx3vaP9dYuvRCt0b2FMa4l+6ITOTlyg/I3hw0CMqXgx0mCBtmpJc6gseR+u9XIbMh44cmi4f5oZFTP5R+M3D8GvBIfY2IUbbWGNuoPCtLh6CtS8Bj70KkikcvccrDpkIiBmkeuhQ+5fJm+T6C99M4tXwE3mTMT9YH1BXaexp90ZrC0X1HQIj/oHHAU1xCNOqE8wyJIC4XTTzDhPEUccSgCh9k2FS32WD6rcYxs3w8n7BTIfS603pFTwPtHzcA3a5Gxmw6AIZ86ErWqajupn/A8vw2mEnMkkFjEuh+LMvFzW0LJgrznBHXnh1XO0nSB7DtqqzIu0zlmdwLgNpQ3/SJ root@ap74Container 
+      - gitCloneTarget=k2s
       - gitClone=git@bitbucket.org:ben74/k2s.git
       - init = /k2s/ap74/ap74init.sh
       - curlExec_=https://get.k3s.io

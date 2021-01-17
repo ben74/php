@@ -24,6 +24,7 @@ if [ ! -z "$gitClone" ] ;then
         git pull;
     else
         ssh-keyscan github.com > /root/.ssh/known_hosts
+        ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
     #ssh-keyscan github.com > githubKey;ssh-keygen -lf githubKey;cat githubKey > /.ssh/known_hosts
         echo $date >> gitClone.log;
         #GIT_SSH="/usr/bin/sshnoprompt.sh" 

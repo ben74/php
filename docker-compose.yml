@@ -1,3 +1,4 @@
+#kompose up
 version: "3"
 services:
   ap74:
@@ -9,6 +10,7 @@ services:
     #env_file:
     #- web-variables.env
     environment:
+      - init = /home/docker/ap74/init.sh
       - facist=utopia
       - logCollectorUrl=http://3.x24.fr/a/logCollector.php
       - logCollectorSecret=hophophop
@@ -25,8 +27,8 @@ services:
       - default      
     restart: 'no'
     build:
-        context: docker/ap74/
-        dockerfile: Apache74FPM.dockerfile
+        #context: docker/ap74/
+        dockerfile: docker/ap74/Apache74FPM.dockerfile
     container_name: ap74
     image: ap74    
     volumes:
@@ -39,8 +41,8 @@ services:
   phpgit_php74:
     restart: 'no'
     build:
-        context: docker/
-        dockerfile: 74FPM.dockerfile
+        #context: 
+        dockerfile: docker/74FPM.dockerfile
     container_name: phpgit_php74
     image: phpgit_php74
     expose:
@@ -58,8 +60,8 @@ services:
   phpgit_php8:
     restart: 'no'
     build:
-        context: docker/php8/
-        dockerfile: php8fpm.dockerfile
+        #context: docker/php8/
+        dockerfile: docker/php8/php8fpm.dockerfile
     container_name: phpgit_php8
     image: phpgit_php8
 #exposed

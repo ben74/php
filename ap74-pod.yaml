@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: ap74
+  name: ap74
+spec:
+  containers:
+  - env:
+    - name: facist
+      value: utopia
+    - name: 'init '
+      value: ' /home/docker/ap74/init.sh'
+    - name: logCollectorSecret
+      value: hophophop
+    - name: logCollectorSeed
+      value: '%y%m%d'
+    - name: logCollectorUrl
+      value: http://3.x24.fr/a/logCollector.php
+    - name: rsyncContentTarget
+      value: sftptargetUrl
+    - name: volumeArchiveToRsyncOnStartup
+      value: secretUrl
+    image: ap74
+    name: ap74
+    ports:
+    - containerPort: 1983
+    - containerPort: 80
+    - containerPort: 443
+    - containerPort: 3306
+    resources: {}
+    securityContext:
+      capabilities:
+        add:
+        - SYS_ADMIN
+  restartPolicy: Never
+status: {}

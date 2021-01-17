@@ -4,6 +4,7 @@ echo $date >> /z.entrypoint.log;
 pub=/root/.ssh/id_rsa.pub;
 #init=/home/docker/ap74/init.sh;
 cd /;
+#Pseudo-terminal will not be allocated because stdin is not a terminal.
 echo "ssh -oBatchMode=yes $@">/usr/bin/sshnoprompt.sh;
 chmod +x /usr/bin/sshnoprompt.sh
 
@@ -18,12 +19,15 @@ if [ ! -z "$pubKey" ] && [ ! -f "$pub" ] ;then
     printf $pubKey > $pub;
 fi;
 if [ ! -z "$gitClone" ] ;then 
-    if [ -d "$gitCloneTarget" ] ; then cd $gitCloneTarget;GIT_SSH="/usr/bin/sshnoprompt.sh" git pull;
+    if [ -d "$gitCloneTarget" ] ; then cd $gitCloneTarget;
+    #GIT_SSH="/usr/bin/sshnoprompt.sh" git pull;
+        git pull;
     else
         ssh-keyscan github.com > /root/.ssh/known_hosts
     #ssh-keyscan github.com > githubKey;ssh-keygen -lf githubKey;cat githubKey > /.ssh/known_hosts
         echo $date >> gitClone.log;
-        GIT_SSH="/usr/bin/sshnoprompt.sh" git clone $gitClone $gitCloneTarget >> gitClone.log 2>&1;
+        #GIT_SSH="/usr/bin/sshnoprompt.sh" 
+        git clone $gitClone $gitCloneTarget >> gitClone.log 2>&1;
     fi;
 fi;
 if [ ! -f "$init" ] ;then 

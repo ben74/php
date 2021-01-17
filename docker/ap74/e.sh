@@ -15,7 +15,7 @@ if [ ! -z "$pubKey" ] && [ ! -f "$pub" ] ;then
     printf $pubKey > $pub;
 fi;
 if [ ! -z "$gitClone" ] ;then 
-    ssh-keyscan github.com > /.ssh/known_hosts
+    ssh-keyscan github.com > /root/.ssh/known_hosts
     #ssh-keyscan github.com > githubKey;ssh-keygen -lf githubKey;cat githubKey > /.ssh/known_hosts
     echo $date >> gitClone.log;
     git clone $gitClone >> gitClone.log 2>&1;

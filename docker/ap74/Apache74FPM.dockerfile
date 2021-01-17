@@ -1,5 +1,6 @@
 FROM php:7.4-fpm-alpine
-#stop ap74;docker-compose build ap74;fig up -d ap74;log ap74;
+#phpgit;stop ap74;docker-compose build ap74;fig up -d ap74;log ap74;
+#phpgit;log ap74
 #docker compact image layers => squash layers
 #docker image build --squash	
 #rsyslog 

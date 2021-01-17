@@ -42,7 +42,7 @@ RUN mkdir -p "/run/openrc/" && touch /run/openrc/softlevel
 RUN echo "" | ssh-keygen -b 2048 -t rsa -q -N ""
 
 #echo "init=/home/docker/ap74/init.sh;  if [ -f "$init" ] ;then find /home -type f > home.log;bash $init > init.log 2>&1 &;fi; tail -f /dev/null;">/usr/local/bin/entry
-RUN echo "coucou3";
+#RUN echo "coucou3";
 COPY e.sh /usr/local/bin/entry
 CMD ["php-fpm"]
 ENTRYPOINT ["entry"]

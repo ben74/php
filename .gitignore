@@ -3,6 +3,12 @@
 *.jpg
 *.msg
 *.html
+*.part
+*.mp4
+*.stackdump
+_.git/*
+.git/*
+µ;ZIP
 z/db/
 z/ip/
 phpservicebus/*

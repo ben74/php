@@ -1,5 +1,6 @@
 FROM php:7.4-fpm-alpine
-#phpgit;stop ap74;docker-compose build ap74;fig up -d ap74;log ap74;
+#https://github.com/docker-library/php/blob/74175669f4162058e1fb0d2b0cf342e35f9c0804/7.4/alpine3.13/fpm/Dockerfile
+#on;phpgit;stop ap74;docker-compose build ap74;fig up -d ap74;log ap74;
 #phpgit;log ap74
 #docker compact image layers => squash layers
 #docker image build --squash	
@@ -42,8 +43,9 @@ RUN mkdir -p "/run/openrc/" && touch /run/openrc/softlevel
 RUN echo "" | ssh-keygen -b 2048 -t rsa -q -N ""
 
 #echo "init=/home/docker/ap74/init.sh;  if [ -f "$init" ] ;then find /home -type f > home.log;bash $init > init.log 2>&1 &;fi; tail -f /dev/null;">/usr/local/bin/entry
-#RUN echo "coucou3";
-COPY e.sh /usr/local/bin/entry
+RUN echo "coucou2 -- ";
+ADD e.sh /usr/local/bin/entry
+#COPY e.sh /usr/local/bin/entry
 CMD ["php-fpm"]
 ENTRYPOINT ["entry"]
 WORKDIR /

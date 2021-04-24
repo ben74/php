@@ -39,7 +39,7 @@ services:
 #https://stackoverflow.com/questions/52037957/kubernetes-share-a-directory-from-your-local-system-to-kubernetes-container    
     - apacheMySql1:/z/
     #web document root : delegated : faster writes, cached : faster read    s
-    - ./:/home/:cached
+    #- ./:/home/:cached
 #- syscgroup1:/sys/fs/cgroup
 
   phpgit_php74:

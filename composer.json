@@ -5,6 +5,8 @@
         "amphp/file": "^1.0",
         "amphp/http-client": "^4.5",
         "amphp/http-server": "^2.1",
-        "amphp/websocket-server": "^2.0"
+        "amphp/websocket-server": "^2.0",
+        "alptech/wip": "^1.12",
+        "moxiecode/plupload": "^3.1"
     }
 }

@@ -1,0 +1,1 @@
+<?php $c=curl_init($_ENV['NOTIFY_URL']."?say=".urlencode($argv[1]));curl_exec($c);

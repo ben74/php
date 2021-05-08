@@ -1,0 +1,42 @@
+#kd $bk/003.minixExperimental.yml;ka $bk/003.minixExperimental.yml;
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minix
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    #type: Recreate
+  template:
+    spec:
+      terminationGracePeriodSeconds: 99999
+      containers:
+        - name: mini
+          image: alptech/yuzu:ap74ff
+          #sleeps forever ..
+          command: ['sh','-c','tail -f /dev/null']
+          #nb : entrypoints expects y/alpineBash.sh to be present .. in order to setup php-fpm && nginx ..
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            postStart:
+              exec:
+                command: [ 'sh','-c',"php -dextension=pcntl.so sleep.php &"]
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - '-c'
+                  - |
+                    /bin/bash rainbowPreStop.sh --interval=10 --maxCpuUsage=1 --maxDiskUsage=1 --maxNetUsage=1 \
+                    --countNbProc="ffmpeg|ffprobe" \
+                    --sighup="^php -dex" \
+                    --command="php command.php saySomething"
+          command: [ '/usr/bin/supervisord', '-c', '/var/www/html/supervisord.conf' ]
+          env:
+            - name: NOTIFY_URL
+              value: 10.8.8.43/notifyMe.php
+            - name: SUPERVISOR_COMMAND
+              value: bash -c "[ -f '/tmp/'`uname -n`'.terminated' ] || php -dextension=pcntl.so aben/sleep.php"
+            - name: SUPERVISOR_NUMPROCS
+              value: "1"

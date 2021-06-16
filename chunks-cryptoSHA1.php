@@ -1,5 +1,22 @@
 <?php
 /*
+ * js crypto lib needs secure (https or localhost environment) in order to work !
+ * in order to run a quick php webserver run at the same folder this command :
+ * php -S 0.0.0.0:80 &
+*/
+session_start();
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_STRICT & ~E_DEPRECATED);
+$_ENV['u'] = 'nunosh';
+$_ENV['p'] = 'twohundred';
+if (!isset($argv) and !isset($_SESSION['logged'])) {
+    if (isset($_POST) and $_POST['u'] == $_ENV['u'] and $_POST['p'] == $_ENV['p']) {
+        $_SESSION['logged'] = 1;
+    } else {
+        die("<center>Superlogin:<br><form method=post><input name=u value=u><br><input name=p value=p type=password><br><input type=submit></form>");
+    }
+}
+
+/*
 1: input file onchange ==> js split file per chunk & calcul sha1 total & calcul sha1 sur chaque chunk
 2: si un chunck ne renvoie pas le même sha1 on le renvoie ( jamais observé personnellement )
 3: un cookie vuuid:$checkSumFichier = $UID se crée, permettant le resume de l'upload si interompu, failed, closed etc .. tu peux revenir dessus, si le cookie est toujours là, il va le trouver et donc de facto resumer ce dernier ;)
@@ -106,9 +123,15 @@ if ($_FILES) {
     }
     die('{"crc32":"' . $hash . '","uuid":"' . $uuid . '"}');
 }
-?><html lang="en">
+?>
+<html lang="en">
 <head><title>Upload file per chuncks with SHA-1 Validation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>html {
+            background: #000;
+            color: #CCC;
+            font-family:Roboto,Sans-serif;
+        }</style>
 </head>
 <body>
 <fieldset>
@@ -120,13 +143,20 @@ if ($_FILES) {
     <div id="chunk-information"></div>
 </fieldset>
 <hr>
-<script>var j, finalMsg, finalChecksum, y, dejaUploades = [], x, errorBreak = 0, failed = 0, success = 0,
+<script>
+    var https = 1, j, finalMsg, finalChecksum, y, dejaUploades = [], x, errorBreak = 0, failed = 0, success = 0,
         maxRetries = 10,
         algo = '<?php echo $algo?>', hashHex, reader = new FileReader(), tt, expectedCrc32, numberofChunks, chunkForm,
         chunk, cl = console.debug, file, filename, chunkCounter = 0, videoId = 0, playerUrl = "", url = "?"
     const input = document.querySelector('#FileUploadHere'), chunkSize = <?php echo $chunkSize?>;
 
+    if (typeof (crypto.subtle) != 'object') {
+        https = 0;
+        document.querySelector('#video-information').innerHTML = "<b style='font-size:4vw;color:#D00'>/!\\ Crypto.subtle needs https in order to work /!\\</b>";
+    }
+
     input.addEventListener('change', function () {
+        if (!https) return;
         file = input.files[0];
         reader = new FileReader();
         reader.onloadend = readerResFichierComplet;

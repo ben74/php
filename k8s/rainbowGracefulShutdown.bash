@@ -4,13 +4,16 @@
 #defaults
   exclude='rainbowPreStop';
   nbKilledProcesses=0;
+  cpuUsage=0;
   interval=0;
   nbProc=0;
-  cpuUsage=0;
   sum1=0;
   sum2=0;
+  dDisk=0;
+  dNet=0;
   net1=0;
   net2=0;
+  ok=0;
 
 usage() { echo "$0 usage:" && grep " .)\ #" $0; exit 0; }
 
@@ -64,7 +67,8 @@ while true; do
 done
 
 if [ ! -z $debug ]; then
-  echo "arguments list : countNbProc : $countNbProc, interval : $interval, maxNetUsage : $maxNetUsage,maxDiskUsage : $maxDiskUsage,maxCpuUsage : $maxCpuUsage, sighup : $sighup, command : $command";
+  echo "arguments are : countNbProc : $countNbProc, interval : $interval, maxNetUsage : $maxNetUsage,maxDiskUsage : $maxDiskUsage,maxCpuUsage : $maxCpuUsage, sighup : $sighup, command : $command";
+  if [ -v maxDiskUsage ]; then echo "maxDiskUsage::$maxDiskUsage;"; fi;
 fi;
 
 #/bin/bash /var/www/html/scripts/rainbowPreStop.sh -interval 10 -maxCpuUsage 1 -maxDiskUsage 1 -maxNetUsage 1 -countNbProc 'ffmpeg|ffprobe' -sighup "^php artisan ben sleepForever" -command "infomaniak-docker-php-entrypoint php artisan node:down;"
@@ -79,53 +83,41 @@ fi;
 # supervisorctl signal HUP all;
 # Je n'ai pas reçu les signaux via supervisord même avec stopsignal=HUP
 
-  if [ ! -z "$sighup" ]; then pkill -HUP -f "$sighup";  fi;
-  if [ ! -z "$command" ]; then `$command`; fi; #too many arguments
-
-# Somme usage cpu + cast to int
-
-  if [ ! -z $maxCpuUsage ]; then cpuUsage=`top -b -n 1 | awk 'NR>7 { sum += $9; } END { print sum; }'`;  cpuUsage=${cpuUsage%.*}; fi;
-  if [ ! -z "$countNbProc" ]; then
-    nbProc=`ps -ax | grep -iE "$countNbProc" | grep -v 'grep -iE' | grep -v $exclude | wc -l`;
-  fi;
-#Somme utilisation IO et network : permet de qualifier à 100% qu'il ne se passe rien !!!!
-
-  if [ $interval -gt 0 ]; then
-    if [ -v maxDiskUsage ]; then sum1=`cat /proc/[0-9]*/io | grep -E 'read_bytes|write_bytes' | grep -v cancelled | cut -d" " -f 2 | awk '{ sum += $1; } END { print sum; }'`; fi;
-    if [ -v maxNetUsage ]; then net1=`cat /proc/[0-9]*/net/netstat | grep "IpExt: 0" | cut -d" " -f 8,9 | awk '{ sum += $1;sum += $2; } END { print sum; }'`; fi;
-    sleep $interval
-    if [ -v maxDiskUsage ]; then sum2=`cat /proc/[0-9]*/io | grep -E 'read_bytes|write_bytes' | grep -v cancelled | cut -d" " -f 2 | awk '{ sum2 += $1; } END { print sum2; }'`; fi;
-    if [ -v maxNetUsage ]; then net2=`cat /proc/[0-9]*/net/netstat | grep "IpExt: 0" | cut -d" " -f 8,9 | awk '{ sum += $1;sum += $2; } END { print sum; }'`; fi;
-  fi;
-
-((dDisk = sum2 - sum1))
-((dNet = net2 - net1))
-if [ $dDisk -lt 0 ]; then $nbKilledProcesses=1;fi;
-if [ $dNet -lt 0 ]; then $nbKilledProcesses=1;fi;
-
-if [ ! -z $debug ]; then
-  if [ -v maxDiskUsage ]; then echo "maxDiskUsage::$maxDiskUsage;"; fi;
-  echo "Debug::$countNbProc,$interval,$nbProc,$dDisk,$sNet";
-fi;
+  if [ -v sighup ]; then pkill -HUP -f "$sighup";  fi;
+  if [ -v command ]; then `$command`; fi; #too many arguments
 
 # tant que 1 process ou que le processeur est utilisé à plus de 1%
 # le process ffmpeg peut parfois n'utiliser quedalle de cpu lorsqu'il parcours le fichier ..
-  while [ $nbKilledProcesses -gt 0 ] || [ $dDisk -gt $maxDiskUsage ] || [ $dNet -gt $maxNetUsage ] || [ $nbProc -gt 0 ] || [ $cpuUsage -gt $maxCpuUsage ] ; do
+  while [ $ok -lt 1 ] || [ $nbKilledProcesses -gt 0 ] || [ $dDisk -gt $maxDiskUsage ] || [ $dNet -gt $maxNetUsage ] || [ $nbProc -gt 0 ] || [ $cpuUsage -gt $maxCpuUsage ] ; do
+
+#Somme utilisation IO et network : permet de qualifier à 100% qu'il ne se passe rien !!!!
     if [ $interval -gt 0 ]; then
       if [ -v maxDiskUsage ]; then sum1=`cat /proc/[0-9]*/io | grep -E 'read_bytes|write_bytes' | grep -v cancelled | cut -d" " -f 2 | awk '{ sum += $1; } END { print sum; }'`; fi;
       if [ -v maxNetUsage ]; then net1=`cat /proc/[0-9]*/net/netstat | grep "IpExt: 0" | cut -d" " -f 8,9 | awk '{ sum += $1;sum += $2; } END { print sum; }'`; fi;
-      sleep interval;
+      sleep $interval;
       if [ -v maxDiskUsage ]; then sum2=`cat /proc/[0-9]*/io | grep -E 'read_bytes|write_bytes' | grep -v cancelled | cut -d" " -f 2 | awk '{ sum2 += $1; } END { print sum2; }'`; fi;
       if [ -v maxNetUsage ]; then net2=`cat /proc/[0-9]*/net/netstat | grep "IpExt: 0" | cut -d" " -f 8,9 | awk '{ sum += $1;sum += $2; } END { print sum; }'`; fi;
+
+      if [ $net2 -lt 0 ]; then net2=0;  fi;
+      if [ $net1 -lt 0 ]; then net1=0;  fi;
+
+      ((dDisk = sum2 - sum1))
+      ((dNet = net2 - net1))
+
+      if [ $dDisk -lt 0 ]; then $nbKilledProcesses=1;fi;
+#line 103: 0=1: command not found : erreur si substract négatif
+      if [ $dNet -lt 0 ]; then $nbKilledProcesses=1;fi;
     fi;
 
-    ((dDisk = sum2 - sum1))
-    ((dNet = net2 - net1))
-    if [ $dDisk -lt 0 ]; then $nbKilledProcesses=1;fi;
-    if [ $dNet -lt 0 ]; then $nbKilledProcesses=1;fi;
+# Somme usage cpu + cast to int
+    if [ -v maxCpuUsage ]; then cpuUsage=`top -b -n 1 | awk 'NR>7 { sum += $9; } END { print sum; }'`;  cpuUsage=${cpuUsage%.*}; fi;
+    if [ -v countNbProc ]; then nbProc=`ps -ax | grep -iE "$countNbProc" | grep -v 'grep -iE' | grep -v $exclude | wc -l`;  fi;
 
-    if [ ! -z $maxCpuUsage ]; then cpuUsage=`top -b -n 1 | awk 'NR>7 { sum += $9; } END { print sum; }'`;  cpuUsage=${cpuUsage%.*}; fi;
-    if [ ! -z "$countNbProc" ]; then nbProc=`ps -ax | grep -iE "$countNbProc" | grep -v 'grep -iE' | grep -v $exclude | wc -l`;  fi;
+    if [ -v debug ]; then
+      echo "Debug::$countNbProc: nb = $nbProc; cpu = $cpuUsage; iv = $interval; ddisk = $dDisk; dnet = $dNet; net2 = $net2; net1 = $net1; killed = $nbKilledProcesses";
+    fi;
+# premières stats générées
+    ok=1;
 
   done;
 

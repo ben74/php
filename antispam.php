@@ -1,12 +1,28 @@
-<?
+<?// should be called after a page which ideally sets the cookie, don't apply on regular page or the one the bots get on
 $failThreshold=3;
 $riddles=['which color is the white horse of Joseph Stalin ?'=>['white','blanc'],'how many fingers do you have in your hand ?'=>['five',5,'cinq']];
 
-$var=hash('crc32b',date('Ymd'));if(!isset($_COOKIE[$var])){setcookie($var,1);r302('?#nc');}
+$d='ipFails';if(!is_dir($d))mkdir($d);$fincr=$d.'/'.$_SERVER['REMOTE_ADDR'].'.hits';
+if(isset($_FILES) && $_FILES){
+    if(strpos(json_encode($_FILES),'.php'))die('deny some extensions upload : remote shells');
+}
 
-if('leverage session start usage here'){
-    $d='ipFails';if(!is_dir($d))mkdir($d);$fincr=$d.'/'.$_SERVER['REMOTE_ADDR'].'.hits';@session_start();
-    if(!isset($_COOKIE[session_name()])){if(!is_file($fincr))$x=0;/*elseif(filemtime($fincr)<(time()-1800))$x=0;else{$x=file_get_contents($fincr);}*/if($x>5)die('Please enable your cookies, too much connection errors, limitation restarts in 30 minutes');file_put_contents($fincr,$x+1);r302('?#nsn:0');}
+$var=hash('crc32b',date('Ymd'));
+if(!isset($_COOKIE[$var])){// Ensure client has cookies enabled
+    setcookie($var,1);
+    if(!is_file($fincr) or filemtime($fincr)< (time()-1800) )$x=0;else{$x=file_get_contents($fincr);}
+    if($x>5){die('Please enable your cookies, too much connection errors, limitation restarts in 30 minutes');}
+    file_put_contents($fincr,$x+1);r302('?#nsn:0');
+    r302('?#nc');
+}
+
+if('leverage session start usage here : make sure client support session cookies for secure storage'){
+    @session_start();
+    if(!isset($_COOKIE[session_name()])){
+        if(!is_file($fincr))$x=0;/*elseif(filemtime($fincr)<(time()-1800))$x=0;*/else{$x=file_get_contents($fincr);}
+        if($x>5)die('Please enable your cookies, too much connection errors, limitation restarts in 30 minutes');
+        file_put_contents($fincr,$x+1);r302('?#nsn:0');
+    }
 }
 
 $val=hash('crc32b',$_SERVER['REMOTE_ADDR'].date('YmdH'));

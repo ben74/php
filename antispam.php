@@ -7,7 +7,9 @@ if(isset($_FILES) && $_FILES){
     if(strpos(json_encode($_FILES),'.php'))die('deny some extensions upload : remote shells');
 }
 
-$var=hash('crc32b',date('Ymd'));
+//Has_algos(), xxh3, crc32c, crc32
+$hash='crc32b';
+$var=hash($hash,date('Ymd'));
 if(!isset($_COOKIE[$var])){// Ensure client has cookies enabled
     setcookie($var,1);
     if(!is_file($fincr) or filemtime($fincr)< (time()-1800) )$x=0;else{$x=file_get_contents($fincr);}
@@ -25,8 +27,8 @@ if('leverage session start usage here : make sure client support session cookies
     }
 }
 
-$val=hash('crc32b',$_SERVER['REMOTE_ADDR'].date('YmdH'));
-$val2=hash('crc32b',$_SERVER['REMOTE_ADDR'].date('YmdH',strtotime('1 hour ago')));
+$val=hash($hash,$_SERVER['REMOTE_ADDR'].date('YmdH'));
+$val2=hash($hash,$_SERVER['REMOTE_ADDR'].date('YmdH',strtotime('1 hour ago')));
 
 if($_POST){
     if(!isset($_POST[$var])){$_SESSION['fails']+=10;r302('?#nt:0');}

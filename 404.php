@@ -1,4 +1,4 @@
-<?#aka :: frontController
+<?php #aka :: frontController
 spl_autoload_register('__autoload1');
 function __autoload1($name){
     $name=str_replace('\\','/',$name);
@@ -21,6 +21,7 @@ require_once 'app/functions.php';
 $mediaExt=['ico','webp','png', 'jpg', 'gif', 'jpeg'];
 $mediaJsCssExt=['css','jpg','pdf','ico','webp','png', 'jpg', 'gif', 'jpeg'];#and files so..
 $imagesExt=['webp','png', 'jpg', 'gif', 'jpeg'];
+
 if(strpos($uq, '/tn-') && in_array($ext, $imagesExt) && 'is thumbnail not calculated yet cause 404') {
     \Unicorn\thumbgen::i();#getinstance
     $h=$w=0;

@@ -1,4 +1,4 @@
-<?
+<?php
 $title='Racetrack :: php samples and quick demos';
 require_once 'z/header.php';
 ?>    

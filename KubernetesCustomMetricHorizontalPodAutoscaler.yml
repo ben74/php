@@ -1,0 +1,229 @@
+#     Only have to replace namespace: test,  test.uri && ingressclass in order to get it working ASAP
+#  image : alptech/yuzu:swoolecert is openswool with cert made ( faster boot ); port 80 used for setting a value
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test
+  namespace: test
+  annotations:
+    kubernetes.io/ingress.class: ingressclass
+
+spec:
+  rules:
+    - host: test.uri
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              serviceName: test
+              servicePort: h80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exporter
+  namespace: test
+data:
+  80.php: |
+    <?php // curl -k http://test. --data {"a":1,"b":2};#sets a much key,value pairs as custom metrics
+    $u=$_SERVER['REQUEST_URI'];
+    if($u=='/set'){
+       $j=json_decode(file_get_contents('php://input'),true);
+      foreach($j as $k=>$v){
+        file_put_contents($k.'.value',$v);
+      }
+    }
+  os.php: |
+    <?php // If anyone knows a simple replacement other than swoole .. he's welcome --- Somehow I only think I'll need to know what the json output is expected for theses routes
+    $server = new Swoole\HTTP\Server("0.0.0.0",443,SWOOLE_PROCESS,SWOOLE_SOCK_TCP | SWOOLE_SSL);
+    $server->set(['worker_num' => 1,'ssl_cert_file' => __DIR__ . '/example.com+5.pem','ssl_key_file' => __DIR__ . '/example.com+5-key.pem']);
+    $server->on('Request', 'onMessage');
+    $server->start();
+    function onMessage($req, $res){
+        $svc=$_ENV['svc'];//'test-metrics-exporter';//-svc
+        $ns=$_ENV['ns'];//'test';
+        $group=$_ENV['group'];//'custom.metrics.k8s.io/v1beta1'
+
+        $url=$req->server['request_uri'];
+        //file_put_contents('monolog.log',"\n".$url,8);
+
+        if($url=='/apis/'.$group){
+
+          //  curl -k https://127.0.0.1/apis/$group     curl -k https://127.0.0.1/apis/custom.metrics.k8s.io/v1beta1
+
+          $ret=[];$x=glob('*.value');foreach($x as $v){$v=str_replace('.value','',$v);$ret[]=['name'=>'namespaces/'.$v,'singularName'=>'','namespaced'=>false,'kind'=>'MetricValueList','verbs'=>[0=>'get']];}
+          $res->end(json_encode(['kind'=>'APIResourceList','apiVersion'=>'v1','groupVersion'=>$group,'resources'=>$ret]));
+          return;
+
+        } elseif(strpos($url,'/apis/'.$group.'/namespaces/'.$ns.'/services/'.$svc.'/')!==FALSE){     // exposes a precise metric
+
+            //curl -k https://127.0.0.1/apis/custom.metrics.k8s.io/v1beta1/namespaces/test/services/test-metrics-exporter/a
+
+            $x=explode('/',$url);$x=end($x);$f=$x.'.value';if(!is_file($f))touch($f);$value=file_get_contents($f);
+
+            $ts=date('Y-m-d\TH:i:s\Z',filemtime($f));
+            $res->end('{"kind": "MetricValueList","apiVersion": "custom.metrics.k8s.io/v1beta1","metadata": {"selfLink": "/apis/custom.metrics.k8s.io/v1beta1/namespaces/'.$ns.'/services/'.$svc.'/'.$x.'"},"items": [{"describedObject": {"kind": "Service","namespace": "'.$ns.'","name": "'.$svc.'-svc","apiVersion": "/v1"},"metricName": "'.$x.'","timestamp": "'.$ts.'","value": "'.$value.'","selector": null}]}');
+    return;
+
+        }
+        $res->status(404);return;
+      }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-metrics-exporter
+  namespace: test
+  annotations:
+    prometheus.io/port: '443'
+    prometheus.io/scrape: 'true'
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      name: h443
+  selector:
+    app: test-metrics-exporter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test
+  namespace: test
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      name: h80
+  selector:
+    app: test-metrics-exporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-metrics-exporter
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: test-metrics-exporter
+  template:
+    metadata:
+      labels:
+        app: test-metrics-exporter
+    spec:
+      terminationGracePeriodSeconds: 1
+      volumes:
+        - name: exporter
+          configMap:
+            name: exporter
+            defaultMode: 0744
+            items:
+              - key: os.php
+                path: os.php
+              - key: 80.php
+                path: 80.php
+      containers:
+        - name: test-metrics-exporter
+          env:
+            - name: svc
+              value: "test-metrics-exporter"
+            - name: ns
+              value: "test"
+            - name: group
+              value: "custom.metrics.k8s.io/v1beta1"
+          #image: openswoole/swoole:latest
+          image: alptech/yuzu:swoolecert
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: exporter
+              mountPath: /var/www/os.php
+              subPath: os.php
+            - name: exporter
+              mountPath: /var/www/80.php
+              subPath: 80.php
+          command:
+            - /bin/sh
+            - -c
+            - |
+              printf 3 > a.value; # default Value for hpa at startup
+              touch monolog.log;
+              php os.php &
+              php -S 0.0.0.0:80 80.php &
+              tail -f monolog.log
+---
+kind: HorizontalPodAutoscaler
+apiVersion: autoscaling/v2beta1
+metadata:
+  name: alpine
+  namespace: test
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: alpine
+    apiVersion: apps/v1
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Object
+      object:
+        target:
+          kind: Service
+          name: test-metrics-exporter
+        metricName: a
+        targetValue: '1'
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: alpine
+  template:
+    metadata:
+      labels:
+        app: alpine
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+        - name: alpine
+          image: alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              tail -f /dev/null
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    f=`uname -n`; touch __$f.terminated
+                    pkill -9 1
+
+---
+apiVersion: apiregistration.k8s.io/v1beta1
+kind: APIService
+metadata:
+  name: v1beta1.custom.metrics.k8s.io
+  namespace: test
+spec:
+  # Really important as the cert is self-signed
+  insecureSkipTLSVerify: true
+  group: custom.metrics.k8s.io
+  groupPriorityMinimum: 1000
+  versionPriority: 5
+  version: v1beta1
+  service:
+    name: test-metrics-exporter
+    namespace: test
+    port: 443

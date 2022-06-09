@@ -1,0 +1,574 @@
+# replace values :   namespace: test,ingressclass, swoosh.url, DB_HOST,DB_DATABASE,DB_USERNAME,DB_PASSWORD
+# && then run ab on each service with a simple payload file ex: --data '{"sql":"select count(1) from table","cachetime":3600}'
+# Pure php vs swoole vs Go -> runs a sql query towards a sql host, puts a valid cachefile for an hour, returns all rows as json result
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: swoosh
+  namespace: test
+  annotations:
+    kubernetes.io/ingress.class: ingressclass
+spec:
+  rules:
+    - host: swoosh.url
+      http:
+        paths:
+          - path: /swoole
+            pathType: Prefix
+            backend:
+              serviceName: swoole
+              servicePort: h80
+          - path: /phps
+            pathType: Prefix
+            backend:
+              serviceName: phps
+              servicePort: h80
+          - path: /sql
+            pathType: Prefix
+            backend:
+              serviceName: gogo
+              servicePort: h8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phps
+  namespace: test
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      protocol: TCP
+      name: h80
+  selector:
+    app.kubernetes.io/name: phps
+    app.kubernetes.io/instance: phps
+    app.kubernetes.io/part-of: phps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swoole
+  namespace: test
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      protocol: TCP
+      name: h80
+  selector:
+    app.kubernetes.io/name: swoole
+    app.kubernetes.io/instance: swoole
+    app.kubernetes.io/part-of: swoole
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gogo
+  namespace: test
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      protocol: TCP
+      name: h8080
+  selector:
+    app.kubernetes.io/name: gogo
+    app.kubernetes.io/instance: gogo
+    app.kubernetes.io/part-of: gogo
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swoole
+  namespace: test
+data:
+  common.php: |
+    <?php
+    $conf=['database'=>['connections'=>['vod'=>['h'=>$_ENV['DB_HOST'],'db'=>$_ENV['DB_DATABASE'],'u'=>$_ENV['DB_USERNAME'],'p'=>$_ENV['DB_PASSWORD'],]]]];
+    function logg($x){
+      file_put_contents('log.log',"\n".$x,8);
+    }
+
+    function pdo3($sql, $params = [], $conn = 'vod', $close = 0, $retries = 0)
+    {
+        static $cnx = [];
+        if (is_array($sql)) extract($sql);
+        global $conf;
+        $c = $conf['database']['connections'][$conn];//PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode=""'
+        $options = [\PDO::ATTR_EMULATE_PREPARES => true];
+        if ($close) {
+            if (isset($cnx[$conn])) {
+                $cnx[$conn] = null;
+            }
+            return;
+        }
+        if (!isset($cnx[$conn]) or !$cnx[$conn]) {
+            try {
+                //mysql:mariadb; Fatal error: Uncaught PDOException: SQLSTATE[HY000] [2002] No such file or directory in /home/test.php:27
+                $cnx[$conn] = new \PDO("mysql:host=" . $c['h'] . ";dbname=" . $c['db'], $c['u'], $c['p'], $options);
+            } catch (PDOException $e) {
+                if (stripos($e->getMessage(), 'Too many connections')) {
+                    if ($retries > 3) {
+                        throw $e;
+                        return;
+                    }
+                    sleep(1);
+                    return pdo3($sql, $params, $conn, 0, $retries + 1);
+                } else {
+                    print_r($c);
+                    throw $e;
+                }
+            }
+        }
+        try {
+            if ($params) {
+                $cmd = $cnx[$conn]->prepare($sql);
+                foreach ($params as $k => $value) {
+                    $cmd->bindValue(
+                        is_string($k) ? $k : $k + 1, $value,
+                        is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR
+                    );
+                }
+                $cmd->execute();
+            } else {
+                $cmd = $cnx[$conn]->query($sql);
+            }
+        } catch (\Throwable $e) {
+            $a = 'nada here';
+        }
+
+        if ($cnx[$conn]->errorCode() != '00000') {
+            $err = implode(' ', $cnx[$conn]->errorInfo());
+            throw new \Exception($err);
+        }
+
+        $res = [];
+        while ($x = $cmd->fetch(\PDO::FETCH_ASSOC)) {
+            $res[] = $x;
+        }
+        return $res;
+    }
+  # le swoole php /var/www/html/os.php
+  os.php: |
+    <?php
+    chdir(__DIR__);
+    require_once'common.php';// as a regular webserver, please ???
+
+    try{
+      if(isset($_ENV['TABLE'])){
+          \logg($_ENV['TABLE']);
+          $a=json_decode($_ENV['TABLE'],true);
+          //print_r($a);//echo array_keys($a);
+          #\logg(print_r($a,1));
+
+          foreach($a as $k=>$t){
+            //echo $k.','.$t[0].' , '.json_encode($t[1]);
+            $_ENV[$k] = new Swoole\Table($t[0]);
+            foreach($t[1] as $t2){
+               // print_r($t2);//echo $type;
+                $type='TYPE_'.$t2[1];
+                $type=constant('Swoole\Table::'.$type);
+                $_ENV[$k]->column($t2[0], $type, $t2[2]);
+            }
+            $_ENV[$k]->create();
+          }
+        }
+
+
+    /*
+    php -r '$a=json_decode($_ENV["table"],true);print_r($a);'
+
+    */
+
+    //use \Swoole\Websocket\Server;
+    $p=$_ENV['p'];
+    //cd /var/www/html && php os.php
+    //  ls /var/www/html
+    $options = ['worker_num' => 1,'log_file' => 'log.log','log_level' => SWOOLE_LOG_INFO,'daemonize' => true,'backlog' => 128,   ];
+    $options = ['worker_num' => $_ENV['wn'],'task_worker_num' => $_ENV['twn'],'log_file' => 'log2.log','backlog' => $_ENV['backlog'],];
+
+      $this->server = $server = new wsServer($p,$options);
+    }catch(\throwable $e){
+    echo($e->getMessage().','.$e->getLine());
+      \logg($e->getMessage().','.$e->getLine());
+    }
+    // we dont want a websocket server !!
+    class wsServer
+    {
+      public $server;
+      public function __construct($p, $options){
+        $this->run($p,$options);
+      }
+      function run($p, $options){
+        try{
+          \logg('lin:'.__LINE__);//23
+         //$this->server = $server = new Swoole\Server('0.0.0.0', $p, SWOOLE_BASE, SWOOLE_SOCK_TCP);
+         //$server->on('receive', [$this, 'onMessage']);
+
+        $this->server = $server = new Swoole\HTTP\Server('0.0.0.0', $p);
+        $server->set($options);
+        $server->on('Request', [$this, 'onMessage']);
+
+        $server->on('Receive', function (Swoole\Server $server, $fd, $reactorId, $data){  \logg('rec:'.$data);    });
+
+        $server->on("WorkerStart", function($server, $workerId){ \logg('sw'.$workerId); }); // 33
+        $server->on("WorkerStop", function($server, $workerId){ \logg('Worker Stopped'.$workerId);});
+
+        $server->on("Start", function($server){  \logg('started');   }); // nope
+
+        $server->on("Shutdown", function($server){ \logg('shutingdown');});
+
+        $server->on("Task", function (Swoole\Server $server, $task_id, $reactorId, $data){
+            \logg('onTask');
+          if(0){
+            echo "#{$server->worker_id}\tonTask: [PID={$server->worker_pid}]: task_id=$task_id, data_len=" . strlen($data) . "." . PHP_EOL;
+
+            $server->finish($data);
+            }
+        });
+        $server->on('Finish', function (Swoole\Server $server, $task_id, $data){  \logg("Task#$task_id finished, data_len=" . strlen($data));  });
+        $server->start();
+
+        }catch(\throwable $e){
+          echo($e->getMessage().','.$e->getLine());
+          \logg($e->getMessage().','.$e->getLine());
+        }
+        //WARNING Server::start_check(): onTask event callback must be set
+      }
+      //function onMessage($server, $fd, $reaktorId, $data)
+      function onMessage($req, $res)
+      {
+        try{
+          $url=$req->server['request_uri'];
+            \logg($url);
+            if($url=='/ready'){
+               $res->end('ready');
+              return;
+            }
+             /*
+            ready
+              if(0){
+                  $server->task($data, -1, function (Swoole\Server $server, $task_id, $data)
+                      {
+                          echo "Task Callback: ";
+                          var_dump($task_id, $data);
+                      });
+
+                      $task_id = $server->task($data, 0);
+              }
+            */
+             \logg($req->getContent());
+
+             $cont=$req->getContent();
+             $j=json_decode($cont,true);
+
+            $h=hash('crc32',$j['sql']);
+
+            if($_ENV['rkv']->exists($h)){
+                $res->end($_ENV['rkv']->get($h)['v']);
+                return;
+            }
+
+            $f=rtrim($_ENV['cache'],'/').'/'.$h;
+
+          if(isset($j['bust']) && is_file($f)){
+            @unlink($f);
+          }
+          if(is_file($f) and filemtime($f)>time()){
+              $res->end(file_get_contents($f));
+          }
+
+         if(isset($j['sql'])){
+            $a=\pdo3($j['sql']);
+            $a= json_encode($a);
+
+           if(isset($j['cachetime']) && intval($j['cachetime'])){
+              file_put_contents($f,$a);
+              $_ENV['rkv']->set($h, ['v'=>$a]);
+              touch($f,time()+intval($j['cachetime']));
+            }
+          }else{
+              $a='{"error":"noactionset:'.json_encode($req->server).'"}';
+          }
+         $res->end($a) ;
+
+
+         return;
+
+         $server->send($fd, json_encode(\pdo3($j['sql'])) );
+         $server->close($fd);
+
+          }catch(\throwable $e){
+            echo $e->getMessage().','.$e->getLine();
+            \logg($e->getMessage().','.$e->getLine());
+            $res->end('{"exception":"'.$e->getMessage().','.$e->getLine().'}') ;
+          }
+      }
+    }
+
+
+
+  ps.php: |
+    <?php // Pure php mysql readin pecl install pdo_mysql
+    require_once'common.php';
+    try{
+      if($_SERVER['REQUEST_URI']=='/ready')die('ready');
+    $j=file_get_contents('php://input');
+    //$j=stream_get_contents(STDIN);
+    $j=json_decode($j,true);
+    if(!  isset($j['sql'])){  die('{"a":"b"}');  }
+
+    $f=rtrim($_ENV['cache'],'/').'/'.hash('crc32',$j['sql']);
+
+    if(isset($j['bust']) && is_file($f)){
+      @unlink($f);
+    }
+
+    if(is_file($f) and filemtime($f)>time()){
+        readfile($f);
+        die;
+    }
+
+      $a=json_encode(pdo3($j['sql']));
+      if(isset($j['cachetime'])){
+        file_put_contents($f,$a);
+        touch($f,time()+$j['cachetime']);
+      }
+
+      die($a);
+    }catch(\throwable $e){
+       die('{"exception":"'.$e->getMessage().','.$e->getLine().'}') ;
+     }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swoole
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      is: swoole
+      app.kubernetes.io/name: swoole
+      app.kubernetes.io/instance: swoole
+      app.kubernetes.io/part-of: swoole
+  template:
+    metadata:
+      labels:
+        is: swoole
+        app.kubernetes.io/name: swoole
+        app.kubernetes.io/instance: swoole
+        app.kubernetes.io/part-of: swoole
+    spec:
+      terminationGracePeriodSeconds: 1
+      volumes:
+        - name: swoole
+          configMap:
+            name: swoole
+            defaultMode: 0744
+            items:
+              - key: os.php
+                path: os.php
+              - key: common.php
+                path: common.php
+        - name: cache
+          emptyDir: { }
+
+      containers:
+        - name: fpm
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 1
+            successThreshold: 1
+            
+          env:
+            - name: cache
+              value: /cache
+            - name: TABLE
+              value: '{"rkv":[1000,[["v","STRING",9000]]]}'
+            - name: p
+              value: "80"
+            - name: wn
+              value: "1"
+            - name: twn
+              value: "1"
+            - name: backlog
+              value: "128"
+            - name: DB_HOST
+              value: mariadb
+            - name: DB_DATABASE
+              value: vod
+            - name: DB_USERNAME
+              value: "root"
+            - name: DB_PASSWORD
+              value: "b"
+          image: docker.io/alptech/yuzu:shiva
+          #image: openswoole/swoole:latest
+          imagePullPolicy: IfNotPresent
+
+          volumeMounts:
+            - name: swoole
+              mountPath: /var/www/html/os.php
+              subPath: os.php
+            - name: swoole
+              mountPath: /var/www/html/common.php
+              subPath: common.php
+            - name: cache
+              mountPath: /cache
+
+          command:
+            - /bin/sh
+            - -c
+            - |
+              touch monolog.log
+              cd /var/www/html && php os.php & #&> /dev/null &
+              tail -f monolog.log
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phps
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      is: phps
+      app.kubernetes.io/name: phps
+      app.kubernetes.io/instance: phps
+      app.kubernetes.io/part-of: phps
+  template:
+    metadata:
+      labels:
+        is: phps
+        app.kubernetes.io/name: phps
+        app.kubernetes.io/instance: phps
+        app.kubernetes.io/part-of: phps
+    spec:
+      terminationGracePeriodSeconds: 1
+      volumes:
+        - name: cache
+          emptyDir: { }
+        - name: swoole
+          configMap:
+            name: swoole
+            defaultMode: 0744
+            items:
+              - key: ps.php
+                path: ps.php
+              - key: common.php
+                path: common.php
+      containers:
+        - name: fpm
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 1
+          env:
+            - name: cache
+              value: /cache/
+            - name: DB_HOST
+              value: mariadb
+            - name: DB_DATABASE
+              value: vod
+            - name: DB_USERNAME
+              value: "root"
+            - name: DB_PASSWORD
+              value: "b"
+          image: docker.io/alptech/yuzu:shiva
+          imagePullPolicy: IfNotPresent
+
+          volumeMounts:
+            - name: swoole
+              mountPath: /var/www/html/index.php
+              subPath: ps.php
+            - name: swoole
+              mountPath: /var/www/html/common.php
+              subPath: common.php
+            - name: cache
+              mountPath: /cache
+
+          command:
+            - /bin/sh
+            - -c
+            - |
+              touch monolog.log
+              export PHP_CLI_SERVER_WORKERS=24;#yeah -)
+              cd /var/www/html && php -S 0.0.0.0:80 &> /dev/null &
+              tail -f monolog.log
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gogo
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      is: gogo
+      app.kubernetes.io/name: gogo
+      app.kubernetes.io/instance: gogo
+      app.kubernetes.io/part-of: gogo
+  template:
+    metadata:
+      labels:
+        is: gogo
+        app.kubernetes.io/name: gogo
+        app.kubernetes.io/instance: gogo
+        app.kubernetes.io/part-of: gogo
+    spec:
+      terminationGracePeriodSeconds: 1
+      volumes:
+        - name: cache
+          emptyDir: { }
+      containers:
+        - name: fpm
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 1
+          volumeMounts:
+            - name: cache
+              mountPath: /cache
+          env:
+            - name: cachetime
+              value: "3600"
+            - name: cache
+              value: /cache
+            - name: DBADDR
+              value: mariadb
+            - name: DB
+              value: vod
+            - name: DBUSER
+              value: "root"
+            - name: DBPASS
+              value: "b"
+          image: alptech/yuzu:gogo
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cd /go && ./main
+              touch monolog.log
+              cd /go && ./main &
+              tail -f monolog.log

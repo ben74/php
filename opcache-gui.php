@@ -1,5 +1,8 @@
 <?php
-#from https://github.com/rlerdorf/opcache-status/blob/master/opcache.php
+/*
+    from https://github.com/rlerdorf/opcache-status/blob/master/opcache.php
+    curl -s https://raw.githubusercontent.com/amnuts/opcache-gui/master/index.php -o opcachegui.php
+*/
 define('THOUSAND_SEPARATOR',true);
 
 if (!extension_loaded('Zend OPcache')) {

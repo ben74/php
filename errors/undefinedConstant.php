@@ -1,2 +1,2 @@
 <?php
-nah()
+nah;
